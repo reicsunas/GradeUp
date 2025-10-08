@@ -69,10 +69,47 @@
         // ===================================================================================
         let db = {
             users: [
-                { id: 1, name: "Budi Santoso", email: "budi@sekolah.id", password: "password", role: "student", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=BS", bio: "Siswa kelas XI IPA 2. Hobi membaca buku fiksi ilmiah dan bermain basket." },
-                { id: 2, name: "Dr. Anisa Fitriani", email: "anisa@sekolah.id", password: "password", role: "teacher", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=AF", bio: "Guru mata pelajaran Fisika. Berpengalaman mengajar lebih dari 10 tahun." },
-                { id: 3, name: "Admin Sekolah", email: "admin@sekolah.id", password: "password", role: "admin", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=AD", bio: "Administrator sistem GradeUp." },
-                { id: 4, name: "Citra Lestari", email: "citra@sekolah.id", password: "password", role: "student", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=CL", bio: "Siswa kelas XI IPS 1. Aktif di organisasi OSIS." },
+                // Teacher and Admin
+                { id: 2, name: "Dr. Anisa Fitriani", email: "anisa@sekolah.id", password: "123", role: "teacher", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=AF", bio: "Guru mata pelajaran Fisika. Berpengalaman mengajar lebih dari 10 tahun." },
+                { id: 3, name: "Admin Sekolah", email: "admin@sekolah.id", password: "123", role: "admin", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=AD", bio: "Administrator sistem GradeUp." },
+                
+                // New Student Accounts
+                { id: 101, name: 'Aldebaran Adam Syahputra', username: 'Adam', email: 'adam@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=AA', bio: '' },
+                { id: 102, name: 'Aulia Danish', username: 'Aulia', email: 'aulia@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=AD', bio: '' },
+                { id: 103, name: 'Anzilah Nur', username: 'Anzilah', email: 'anzilah@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=AN', bio: '' },
+                { id: 104, name: 'Chairil Ahmad Fathir', username: 'Chairil', email: 'chairil@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=CA', bio: '' },
+                { id: 105, name: 'Daiva Bhagja Wangsapriyatman', username: 'Daiva', email: 'daiva@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=DB', bio: '' },
+                { id: 106, name: 'Dellaluna Nur Agustina', username: 'Luna', email: 'luna@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=DN', bio: '' },
+                { id: 107, name: 'Denian Prasetya', username: 'Denian', email: 'denian@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=DP', bio: '' },
+                { id: 108, name: 'Fadhillah Nursyifa', username: 'Fadhillah', email: 'fadhillah@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=FN', bio: '' },
+                { id: 109, name: 'Ghaisan Rafani', username: 'Ghaisan', email: 'ghaisan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=GR', bio: '' },
+                { id: 110, name: 'Hasna Fauziah Aqila', username: 'Hasna', email: 'hasna@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=HF', bio: '' },
+                { id: 111, name: 'Heni Ramadhani', username: 'Heni', email: 'heni@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=HR', bio: '' },
+                { id: 112, name: 'Iyan Apriansa', username: 'Iyan', email: 'iyan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=IA', bio: '' },
+                { id: 113, name: 'Keihsa Anindya Danastri Hasan', username: 'Keihsa', email: 'keihsa@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=KA', bio: '' },
+                { id: 114, name: 'Kintan Putri Haryono', username: 'Kintan', email: 'kintan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=KP', bio: '' },
+                { id: 115, name: 'Muhamad Fajri Bakkah', username: 'Fajri', email: 'fajri@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MF', bio: '' },
+                { id: 116, name: 'Muhamad Farhan', username: 'Farhan', email: 'farhan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MF', bio: '' },
+                { id: 117, name: 'Muhammad Nabil Fadhlurrohman', username: 'Nabil', email: 'nabil@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MN', bio: '' },
+                { id: 118, name: 'M.Ridhan Fajari', username: 'Ridhan', email: 'ridhan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MR', bio: '' },
+                { id: 119, name: 'Muhammad Rizqy Irza Saputra', username: 'Rizqy', email: 'rizqy@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MR', bio: '' },
+                { id: 120, name: 'Nadia Aprianca Putri', username: 'Nadia', email: 'nadia@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NA', bio: '' },
+                { id: 121, name: 'Naisya Aufia Indri', username: 'Naisya', email: 'naisya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NA', bio: '' },
+                { id: 122, name: 'Nasya Tri Febriyani', username: 'Nasya', email: 'nasya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NT', bio: '' },
+                { id: 123, name: 'Naya Nardiana', username: 'Naya', email: 'naya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NN', bio: '' },
+                { id: 124, name: 'Nur Maya Aini', username: 'Maya', email: 'maya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NM', bio: '' },
+                { id: 125, name: 'Puspita Widia Kusumaningsih', username: 'Puspita', email: 'puspita@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=PW', bio: '' },
+                { id: 126, name: 'Puteri Rosmayanti', username: 'Puteri', email: 'puteri@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=PR', bio: '' },
+                { id: 127, name: 'Rafa Yanwardi Azhar', username: 'Rafa', email: 'rafa@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=RY', bio: '' },
+                { id: 128, name: 'Raka Alif Al-aziz', username: 'Raka', email: 'raka@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=RA', bio: '' },
+                { id: 129, name: 'Resti Julianti', username: 'Resti', email: 'resti@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=RJ', bio: '' },
+                { id: 130, name: 'Siti Nurmalia Ramadhan', username: 'Malia', email: 'malia@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SN', bio: '' },
+                { id: 131, name: 'Sulthan Fardhan Anggestu', username: 'Sulthan', email: 'sulthan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SF', bio: '' },
+                { id: 132, name: 'Sumayyah Dema Nazihah', username: 'Ayya', email: 'ayya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SD', bio: '' },
+                { id: 133, name: 'Syafira Ramadhani', username: 'Syafira', email: 'syafira@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SR', bio: '' },
+                { id: 134, name: 'Syakilla Insan Sabria', username: 'Syakilla', email: 'syakilla@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SI', bio: '' },
+                { id: 135, name: 'Syifa Amelia Dalimunthe', username: 'Syifa', email: 'syifa@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SA', bio: '' },
+                { id: 136, name: 'Zahra Tunnisa', username: 'Zahra', email: 'zahra@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=ZT', bio: '' },
             ],
             courses: [
                 { id: 1, name: "Pendidikan Agama dan Budi Pekerti", teacherId: 2 }, { id: 2, name: "Pendidikan Pancasila dan Kewarganegaraan (PPKN)", teacherId: 2 }, { id: 3, name: "Bahasa Indonesia", teacherId: 2 }, { id: 4, name: "Bahasa Inggris", teacherId: 2 }, { id: 5, name: "Matematika Wajib", teacherId: 2 }, { id: 6, name: "Sejarah Indonesia", teacherId: 2 }, { id: 7, name: "Seni Budaya", teacherId: 2 }, { id: 8, name: "Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)", teacherId: 2 }, { id: 9, name: "Prakarya", teacherId: 2 }, { id: 10, name: "Matematika Tingkat Lanjut", teacherId: 2 }, { id: 11, name: "Fisika", teacherId: 2 }, { id: 12, name: "Kimia", teacherId: 2 }, { id: 13, name: "Biologi", teacherId: 2 }, { id: 14, name: "Geografi", teacherId: 2 }, { id: 15, name: "Sejarah Peminatan", teacherId: 2 }, { id: 16, name: "Sosiologi", teacherId: 2 }, { id: 17, name: "Ekonomi", teacherId: 2 }, { id: 18, name: "Informatika", teacherId: 2 },
@@ -83,9 +120,9 @@
                 { id: 203, courseId: 3, title: "Analisis Puisi", description: "Analisislah puisi 'Aku' karya Chairil Anwar.", deadline: "2025-10-05T23:59:59", fileUrl: "#" },
             ],
             submissions: [
-                { id: 301, assignmentId: 202, studentId: 1, fileUrl: "#", submittedAt: "2025-09-24T10:00:00", grade: 90, feedback: "Pekerjaan sangat baik dan rapi. Pertahankan!" },
-                { id: 302, assignmentId: 201, studentId: 1, fileUrl: "#", submittedAt: "2025-09-19T15:30:00", grade: null, feedback: null },
-                { id: 303, assignmentId: 202, studentId: 4, fileUrl: "#", submittedAt: "2025-09-25T11:00:00", grade: 75, feedback: "Beberapa nomor masih kurang tepat. Pelajari lagi materinya." },
+                { id: 301, assignmentId: 202, studentId: 101, fileUrl: "#", submittedAt: "2025-09-24T10:00:00", grade: 90, feedback: "Pekerjaan sangat baik dan rapi. Pertahankan!" },
+                { id: 302, assignmentId: 201, studentId: 101, fileUrl: "#", submittedAt: "2025-09-19T15:30:00", grade: null, feedback: null },
+                { id: 303, assignmentId: 202, studentId: 104, fileUrl: "#", submittedAt: "2025-09-25T11:00:00", grade: 75, feedback: "Beberapa nomor masih kurang tepat. Pelajari lagi materinya." },
             ]
         };
         
@@ -93,12 +130,20 @@
         const simulateRequest = (action) => new Promise(resolve => setTimeout(() => resolve(action()), 500));
 
         const api = {
-            login: (email, password) => simulateRequest(() => db.users.find(u => u.email === email && u.password === password) || null),
+            login: (identifier, password) => simulateRequest(() => db.users.find(u => (u.username === identifier || u.email === identifier) && u.password === password) || null),
             register: (data) => simulateRequest(() => {
                 if (db.users.some(u => u.email === data.email)) {
                     return { error: 'Email sudah terdaftar.' };
                 }
-                const newUser = { id: Date.now(), ...data, profilePicture: `https://placehold.co/128x128/fbcfe8/4a5568?text=${data.name.substring(0,2).toUpperCase()}`, bio: '' };
+                if (data.username && db.users.some(u => u.username === data.username)) {
+                    return { error: 'Username sudah digunakan.' };
+                }
+                const newUser = { 
+                    id: Date.now(), 
+                    ...data, 
+                    profilePicture: `https://placehold.co/128x128/fbcfe8/4a5568?text=${data.name.substring(0,2).toUpperCase()}`, 
+                    bio: '' 
+                };
                 db.users.push(newUser);
                 return newUser;
             }),
@@ -292,11 +337,11 @@
         }
 
         function renderLogin() {
-            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><div class="text-center"><h1 class="text-4xl font-bold text-brand"><i class="fas fa-leaf"></i> GradeUp</h1><p class="mt-2 text-gray-600">Selamat datang! Silakan login ke akun Anda.</p></div><form id="login-form" class="space-y-6"><div><label for="email" class="text-sm font-medium text-gray-700">Email</label><input id="email" name="email" type="email" autocomplete="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="contoh@sekolah.id"></div><div><label for="password" class="text-sm font-medium text-gray-700">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="********"></div><p id="login-error" class="text-sm text-red-600"></p><button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark">Login</button></form><p class="text-sm text-center text-gray-600">Belum punya akun? <a href="#" data-page="register" class="font-medium text-brand hover:underline">Registrasi Mandiri di sini</a></p></div></div>`;
+            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><div class="text-center"><h1 class="text-4xl font-bold text-brand"><i class="fas fa-leaf"></i> GradeUp</h1><p class="mt-2 text-gray-600">Selamat datang! Silakan login ke akun Anda.</p></div><form id="login-form" class="space-y-6"><div><label for="identifier" class="text-sm font-medium text-gray-700">Username atau Email</label><input id="identifier" name="identifier" type="text" autocomplete="username" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="Masukkan username atau email"></div><div><label for="password" class="text-sm font-medium text-gray-700">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="********"></div><p id="login-error" class="text-sm text-red-600"></p><button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark">Login</button></form><p class="text-sm text-center text-gray-600">Belum punya akun? <a href="#" data-page="register" class="font-medium text-brand hover:underline">Registrasi Mandiri di sini</a></p></div></div>`;
         }
 
         function renderRegister() {
-            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><h2 class="text-3xl font-bold text-center text-brand">Registrasi Mandiri</h2><form id="register-form" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Nama Lengkap</label><input name="name" type="text" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Nama Anda"></div><div><label class="text-sm font-medium text-gray-700">Email</label><input name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="contoh@sekolah.id"></div><div><label class="text-sm font-medium text-gray-700">Password</label><input name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="********"></div><div><label class="text-sm font-medium text-gray-700">Daftar sebagai</label><select name="role" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option></select></div><p id="register-error" class="text-sm text-red-600"></p><button type="submit" class="w-full py-3 px-4 rounded-full text-white bg-brand hover:bg-brand-dark">Daftar</button></form><p class="text-sm text-center text-gray-600">Sudah punya akun? <a href="#" data-page="login" class="font-medium text-brand hover:underline">Login</a></p></div></div>`;
+            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><h2 class="text-3xl font-bold text-center text-brand">Registrasi Mandiri</h2><form id="register-form" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Nama Lengkap</label><input name="name" type="text" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Nama Lengkap Sesuai Absen"></div><div><label class="text-sm font-medium text-gray-700">Email</label><input name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="contoh@sekolah.id"></div><div><label class="text-sm font-medium text-gray-700">Password</label><input name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="********"></div><div><label class="text-sm font-medium text-gray-700">Daftar sebagai</label><select name="role" id="role-select" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option></select></div><div id="student-fields" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Username</label><input name="username" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Username unik, tanpa spasi"></div><div><label class="text-sm font-medium text-gray-700">Kelas</label><input name="kelas" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Contoh: XI-MIPA 1"></div></div><p id="register-error" class="text-sm text-red-600"></p><button type="submit" class="w-full py-3 px-4 rounded-full text-white bg-brand hover:bg-brand-dark">Daftar</button></form><p class="text-sm text-center text-gray-600">Sudah punya akun? <a href="#" data-page="login" class="font-medium text-brand hover:underline">Login</a></p></div></div>`;
         }
         
         function renderStudentDashboard() {
@@ -383,19 +428,19 @@
         }
 
         function renderEditUserModal() {
-            return `<div id="edit-user-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><h2 class="text-2xl font-bold mb-6">Edit Pengguna</h2><form id="edit-user-form" class="space-y-4"><input type="hidden" id="edit-user-id"><div><label class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="edit-user-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Email</label><input type="email" id="edit-user-email" disabled class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100"></div><div><label class="block text-sm font-medium text-gray-700">Peran</label><select id="edit-user-role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option><option value="admin">Admin</option></select></div><div class="border-t pt-4 mt-4"><label class="block text-sm font-medium text-gray-700">Reset Password (Opsional)</label><input type="password" id="edit-user-password" placeholder="Masukkan password baru" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div class="mt-8 flex justify-end space-x-3"><button type="button" id="cancel-edit-user-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div></form></div></div>`;
+            return `<div id="edit-user-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><h2 class="text-2xl font-bold mb-6">Edit Pengguna</h2><form id="edit-user-form" class="space-y-4"><input type="hidden" id="edit-user-id"><div><label class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="edit-user-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div id="edit-student-fields" class="hidden space-y-4"><div><label class="block text-sm font-medium text-gray-700">Username</label><input type="text" id="edit-user-username" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Kelas</label><input type="text" id="edit-user-kelas" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div></div><div><label class="block text-sm font-medium text-gray-700">Email</label><input type="email" id="edit-user-email" disabled class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100"></div><div><label class="block text-sm font-medium text-gray-700">Peran</label><select id="edit-user-role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option><option value="admin">Admin</option></select></div><div class="border-t pt-4 mt-4"><label class="block text-sm font-medium text-gray-700">Reset Password (Opsional)</label><input type="password" id="edit-user-password" placeholder="Masukkan password baru" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div class="mt-8 flex justify-end space-x-3"><button type="button" id="cancel-edit-user-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div></form></div></div>`;
         }
 
         function renderAdminUserManagement() {
             const { users = [] } = state.currentViewData;
             const searchTerm = (document.getElementById('search-users')?.value || '').toLowerCase();
-            const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchTerm) || u.email.toLowerCase().includes(searchTerm));
+            const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchTerm) || u.email.toLowerCase().includes(searchTerm) || (u.username && u.username.toLowerCase().includes(searchTerm)));
 
             const roleDisplay = { student: 'Siswa', teacher: 'Guru', admin: 'Admin' }; 
             const roleColor = { student: 'bg-blue-100 text-blue-800', teacher: 'bg-green-100 text-green-800', admin: 'bg-purple-100 text-purple-800' };
-            const userRows = filteredUsers.map(u => `<tr class="hover:bg-gray-50"><td class="p-4 flex items-center space-x-3"><img src="${u.profilePicture}" alt="Foto Profil" class="w-10 h-10 rounded-full object-cover"><span class="font-medium text-gray-900">${u.name}</span></td><td class="p-4 text-gray-600">${u.email}</td><td class="p-4"><span class="px-2 py-1 font-semibold leading-tight text-xs rounded-full ${roleColor[u.role]}">${roleDisplay[u.role]}</span></td><td class="p-4 flex space-x-2"><button class="edit-user-btn text-blue-600 hover:text-blue-800" data-user-id="${u.id}"><i class="fas fa-edit"></i></button><button class="delete-user-btn text-red-600 hover:text-red-800" data-user-id="${u.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+            const userRows = filteredUsers.map(u => `<tr class="hover:bg-gray-50"><td class="p-4 flex items-center space-x-3"><img src="${u.profilePicture}" alt="Foto Profil" class="w-10 h-10 rounded-full object-cover"><span class="font-medium text-gray-900">${u.name}</span></td><td class="p-4 text-gray-600">${u.email}</td><td class="p-4 text-gray-600">${u.username || '-'}</td><td class="p-4"><span class="px-2 py-1 font-semibold leading-tight text-xs rounded-full ${roleColor[u.role]}">${roleDisplay[u.role]}</span></td><td class="p-4 flex space-x-2"><button class="edit-user-btn text-blue-600 hover:text-blue-800" data-user-id="${u.id}"><i class="fas fa-edit"></i></button><button class="delete-user-btn text-red-600 hover:text-red-800" data-user-id="${u.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
             
-            return `<div><div class="relative mb-4"><input id="search-users" type="text" placeholder="Cari pengguna..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i></div><div class="overflow-x-auto rounded-lg border border-gray-200"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-100"><tr><th class="p-4 text-left font-semibold text-gray-600">Nama</th><th class="p-4 text-left font-semibold text-gray-600">Email</th><th class="p-4 text-left font-semibold text-gray-600">Peran</th><th class="p-4 text-left font-semibold text-gray-600">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">${userRows}</tbody></table></div></div>`;
+            return `<div><div class="relative mb-4"><input id="search-users" type="text" placeholder="Cari berdasarkan nama, email, atau username..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i></div><div class="overflow-x-auto rounded-lg border border-gray-200"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-100"><tr><th class="p-4 text-left font-semibold text-gray-600">Nama</th><th class="p-4 text-left font-semibold text-gray-600">Email</th><th class="p-4 text-left font-semibold text-gray-600">Username</th><th class="p-4 text-left font-semibold text-gray-600">Peran</th><th class="p-4 text-left font-semibold text-gray-600">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">${userRows}</tbody></table></div></div>`;
         }
 
         function renderAdminMonitoring() {
@@ -408,7 +453,7 @@
             const user = state.currentUser;
             if (!user || user.role === 'admin') { 
                 navigate('login');
-                return;
+                return '';
             }
 
             const infoTabActive = state.profileCurrentTab === 'info';
@@ -430,6 +475,7 @@
                                     </label>
                                 </div>
                                 <h2 class="text-2xl font-bold mt-4">${user.name}</h2>
+                                ${user.role === 'student' ? `<p class="text-gray-600 font-semibold">${user.username} - ${user.kelas}</p>` : ''}
                                 <span class="text-sm font-semibold px-3 py-1 rounded-full bg-pink-100 text-brand mt-2">${user.role === 'student' ? 'Siswa' : 'Guru'}</span>
                                 <p class="text-gray-600 mt-4 italic">"${user.bio || 'Belum ada biografi.'}"</p>
                             </div>
@@ -460,6 +506,12 @@
                             <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
                             <input type="text" id="profile-name" value="${user.name}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
                         </div>
+                        ${user.role === 'student' ? `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Username</label>
+                            <input type="text" id="profile-username" value="${user.username}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                        </div>
+                        ` : ''}
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Alamat Email</label>
                             <input type="email" id="profile-email" value="${user.email}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
@@ -491,6 +543,19 @@
             appContainer.addEventListener('input', (e) => {
                 if(e.target.id === 'search-assignments' || e.target.id === 'search-users') {
                     render();
+                }
+            });
+
+            appContainer.addEventListener('change', (e) => {
+                if (e.target.id === 'role-select') {
+                    const studentFields = document.getElementById('student-fields');
+                    if (e.target.value === 'student') {
+                        studentFields.style.display = 'block';
+                        studentFields.querySelectorAll('input').forEach(input => input.required = true);
+                    } else {
+                        studentFields.style.display = 'none';
+                        studentFields.querySelectorAll('input').forEach(input => input.required = false);
+                    }
                 }
             });
             
@@ -616,6 +681,16 @@
                         modal.querySelector('#edit-user-email').value = user.email;
                         modal.querySelector('#edit-user-role').value = user.role;
                         modal.querySelector('#edit-user-password').value = '';
+                        
+                        const studentFields = modal.querySelector('#edit-student-fields');
+                        if (user.role === 'student') {
+                            studentFields.classList.remove('hidden');
+                            modal.querySelector('#edit-user-username').value = user.username || '';
+                            modal.querySelector('#edit-user-kelas').value = user.kelas || '';
+                        } else {
+                            studentFields.classList.add('hidden');
+                        }
+                        
                         modal.classList.add('flex');
                     }
                     return;
@@ -651,17 +726,22 @@
                 try {
                     switch (form.id) {
                         case 'login-form': {
-                            const user = await api.login(form.email.value, form.password.value);
+                            const user = await api.login(form.identifier.value, form.password.value);
                             if (user) {
                                 state.currentUser = user;
                                 navigate(user.role === 'student' ? 'studentDashboard' : (user.role === 'teacher' ? 'teacherDashboard' : 'adminDashboard'));
                             } else {
-                                form.querySelector('#login-error').textContent = "Email atau password salah.";
+                                form.querySelector('#login-error').textContent = "Username/Email atau password salah.";
                             }
                             break;
                         }
                         case 'register-form': {
-                            const data = { name: form.name.value, email: form.email.value, password: form.password.value, role: form.role.value };
+                            const role = form.role.value;
+                            const data = { name: form.name.value, email: form.email.value, password: form.password.value, role };
+                            if (role === 'student') {
+                                data.username = form.username.value;
+                                data.kelas = form.kelas.value;
+                            }
                             const result = await api.register(data);
                             if (result.error) {
                                 form.querySelector('#register-error').textContent = result.error;
@@ -672,7 +752,12 @@
                             break;
                         }
                         case 'edit-profile-form': {
-                            const data = { name: form.querySelector('#profile-name').value, email: form.querySelector('#profile-email').value, bio: form.querySelector('#profile-bio').value };
+                            const data = { 
+                                name: form.querySelector('#profile-name').value, 
+                                email: form.querySelector('#profile-email').value, 
+                                bio: form.querySelector('#profile-bio').value,
+                                username: form.querySelector('#profile-username')?.value
+                            };
                             const updatedUser = await api.updateUser(state.currentUser.id, data);
                             state.currentUser = updatedUser;
                             showToast('Profil berhasil diperbarui.');
@@ -681,7 +766,13 @@
                         }
                         case 'edit-user-form': {
                             const userId = parseInt(form.querySelector('#edit-user-id').value);
-                            const data = { name: form.querySelector('#edit-user-name').value, role: form.querySelector('#edit-user-role').value, password: form.querySelector('#edit-user-password').value };
+                            const data = { 
+                                name: form.querySelector('#edit-user-name').value, 
+                                role: form.querySelector('#edit-user-role').value, 
+                                password: form.querySelector('#edit-user-password').value,
+                                username: form.querySelector('#edit-user-username').value,
+                                kelas: form.querySelector('#edit-user-kelas').value
+                            };
                             await api.updateUser(userId, data);
                             showToast('Data pengguna berhasil diperbarui.');
                             form.closest('.modal').classList.remove('flex');
