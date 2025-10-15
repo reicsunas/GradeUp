@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Tambahkan Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -53,6 +55,12 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+        .prose {
+             line-height: 1.75;
+        }
+        .prose p { margin-bottom: 1em; }
+        .prose ul, .prose ol { margin-left: 1.5em; margin-bottom: 1em; }
+        .prose li { margin-bottom: 0.5em; }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -65,143 +73,178 @@
 
     <script type="module">
         // ===================================================================================
-        // MOCK DATABASE & API
+        // SUPABASE SETUP
         // ===================================================================================
-        let db = {
-            users: [
-                // Teacher and Admin
-                { id: 2, name: "Dr. Anisa Fitriani", email: "anisa@sekolah.id", password: "123", role: "teacher", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=AF", bio: "Guru mata pelajaran Fisika. Berpengalaman mengajar lebih dari 10 tahun." },
-                { id: 3, name: "Admin Sekolah", email: "admin@sekolah.id", password: "123", role: "admin", profilePicture: "https://placehold.co/128x128/fbcfe8/4a5568?text=AD", bio: "Administrator sistem GradeUp." },
-                
-                // New Student Accounts
-                { id: 101, name: 'Aldebaran Adam Syahputra', username: 'Adam', email: 'adam@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=AA', bio: '' },
-                { id: 102, name: 'Aulia Danish', username: 'Aulia', email: 'aulia@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=AD', bio: '' },
-                { id: 103, name: 'Anzilah Nur', username: 'Anzilah', email: 'anzilah@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=AN', bio: '' },
-                { id: 104, name: 'Chairil Ahmad Fathir', username: 'Chairil', email: 'chairil@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=CA', bio: '' },
-                { id: 105, name: 'Daiva Bhagja Wangsapriyatman', username: 'Daiva', email: 'daiva@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=DB', bio: '' },
-                { id: 106, name: 'Dellaluna Nur Agustina', username: 'Luna', email: 'luna@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=DN', bio: '' },
-                { id: 107, name: 'Denian Prasetya', username: 'Denian', email: 'denian@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=DP', bio: '' },
-                { id: 108, name: 'Fadhillah Nursyifa', username: 'Fadhillah', email: 'fadhillah@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=FN', bio: '' },
-                { id: 109, name: 'Ghaisan Rafani', username: 'Ghaisan', email: 'ghaisan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=GR', bio: '' },
-                { id: 110, name: 'Hasna Fauziah Aqila', username: 'Hasna', email: 'hasna@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=HF', bio: '' },
-                { id: 111, name: 'Heni Ramadhani', username: 'Heni', email: 'heni@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=HR', bio: '' },
-                { id: 112, name: 'Iyan Apriansa', username: 'Iyan', email: 'iyan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=IA', bio: '' },
-                { id: 113, name: 'Keihsa Anindya Danastri Hasan', username: 'Keihsa', email: 'keihsa@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=KA', bio: '' },
-                { id: 114, name: 'Kintan Putri Haryono', username: 'Kintan', email: 'kintan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=KP', bio: '' },
-                { id: 115, name: 'Muhamad Fajri Bakkah', username: 'Fajri', email: 'fajri@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MF', bio: '' },
-                { id: 116, name: 'Muhamad Farhan', username: 'Farhan', email: 'farhan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MF', bio: '' },
-                { id: 117, name: 'Muhammad Nabil Fadhlurrohman', username: 'Nabil', email: 'nabil@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MN', bio: '' },
-                { id: 118, name: 'M.Ridhan Fajari', username: 'Ridhan', email: 'ridhan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MR', bio: '' },
-                { id: 119, name: 'Muhammad Rizqy Irza Saputra', username: 'Rizqy', email: 'rizqy@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=MR', bio: '' },
-                { id: 120, name: 'Nadia Aprianca Putri', username: 'Nadia', email: 'nadia@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NA', bio: '' },
-                { id: 121, name: 'Naisya Aufia Indri', username: 'Naisya', email: 'naisya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NA', bio: '' },
-                { id: 122, name: 'Nasya Tri Febriyani', username: 'Nasya', email: 'nasya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NT', bio: '' },
-                { id: 123, name: 'Naya Nardiana', username: 'Naya', email: 'naya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NN', bio: '' },
-                { id: 124, name: 'Nur Maya Aini', username: 'Maya', email: 'maya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=NM', bio: '' },
-                { id: 125, name: 'Puspita Widia Kusumaningsih', username: 'Puspita', email: 'puspita@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=PW', bio: '' },
-                { id: 126, name: 'Puteri Rosmayanti', username: 'Puteri', email: 'puteri@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=PR', bio: '' },
-                { id: 127, name: 'Rafa Yanwardi Azhar', username: 'Rafa', email: 'rafa@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=RY', bio: '' },
-                { id: 128, name: 'Raka Alif Al-aziz', username: 'Raka', email: 'raka@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=RA', bio: '' },
-                { id: 129, name: 'Resti Julianti', username: 'Resti', email: 'resti@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=RJ', bio: '' },
-                { id: 130, name: 'Siti Nurmalia Ramadhan', username: 'Malia', email: 'malia@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SN', bio: '' },
-                { id: 131, name: 'Sulthan Fardhan Anggestu', username: 'Sulthan', email: 'sulthan@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SF', bio: '' },
-                { id: 132, name: 'Sumayyah Dema Nazihah', username: 'Ayya', email: 'ayya@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SD', bio: '' },
-                { id: 133, name: 'Syafira Ramadhani', username: 'Syafira', email: 'syafira@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SR', bio: '' },
-                { id: 134, name: 'Syakilla Insan Sabria', username: 'Syakilla', email: 'syakilla@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SI', bio: '' },
-                { id: 135, name: 'Syifa Amelia Dalimunthe', username: 'Syifa', email: 'syifa@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=SA', bio: '' },
-                { id: 136, name: 'Zahra Tunnisa', username: 'Zahra', email: 'zahra@sekolah.id', password: '123', role: 'student', kelas: 'XI-MIPA 1', profilePicture: 'https://placehold.co/128x128/fbcfe8/4a5568?text=ZT', bio: '' },
-            ],
-            courses: [
-                { id: 1, name: "Pendidikan Agama dan Budi Pekerti", teacherId: 2 }, { id: 2, name: "Pendidikan Pancasila dan Kewarganegaraan (PPKN)", teacherId: 2 }, { id: 3, name: "Bahasa Indonesia", teacherId: 2 }, { id: 4, name: "Bahasa Inggris", teacherId: 2 }, { id: 5, name: "Matematika Wajib", teacherId: 2 }, { id: 6, name: "Sejarah Indonesia", teacherId: 2 }, { id: 7, name: "Seni Budaya", teacherId: 2 }, { id: 8, name: "Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)", teacherId: 2 }, { id: 9, name: "Prakarya", teacherId: 2 }, { id: 10, name: "Matematika Tingkat Lanjut", teacherId: 2 }, { id: 11, name: "Fisika", teacherId: 2 }, { id: 12, name: "Kimia", teacherId: 2 }, { id: 13, name: "Biologi", teacherId: 2 }, { id: 14, name: "Geografi", teacherId: 2 }, { id: 15, name: "Sejarah Peminatan", teacherId: 2 }, { id: 16, name: "Sosiologi", teacherId: 2 }, { id: 17, name: "Ekonomi", teacherId: 2 }, { id: 18, name: "Informatika", teacherId: 2 },
-            ],
-            assignments: [
-                { id: 201, courseId: 11, title: "Laporan Praktikum Optik", description: "Buat laporan praktikum sesuai format.", deadline: "2025-09-20T23:59:59", fileUrl: "#" },
-                { id: 202, courseId: 5, title: "Aljabar Linear", description: "Kerjakan soal-soal pada file PDF terlampir. Tulis tangan di kertas folio bergaris.", deadline: "2025-09-25T23:59:59", fileUrl: "#" },
-                { id: 203, courseId: 3, title: "Analisis Puisi", description: "Analisislah puisi 'Aku' karya Chairil Anwar.", deadline: "2025-10-05T23:59:59", fileUrl: "#" },
-            ],
-            submissions: [
-                { id: 301, assignmentId: 202, studentId: 101, fileUrl: "#", submittedAt: "2025-09-24T10:00:00", grade: 90, feedback: "Pekerjaan sangat baik dan rapi. Pertahankan!" },
-                { id: 302, assignmentId: 201, studentId: 101, fileUrl: "#", submittedAt: "2025-09-19T15:30:00", grade: null, feedback: null },
-                { id: 303, assignmentId: 202, studentId: 104, fileUrl: "#", submittedAt: "2025-09-25T11:00:00", grade: 75, feedback: "Beberapa nomor masih kurang tepat. Pelajari lagi materinya." },
-            ]
-        };
-        
-        // Simulating network delay for realistic loading states
-        const simulateRequest = (action) => new Promise(resolve => setTimeout(() => resolve(action()), 500));
+        const { createClient } = supabase;
 
+        // !!! PENTING: Ganti dengan kredensial Supabase Anda !!!
+        const SUPABASE_URL = 'https://blgaczkrdmkibjqdvvxo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZ2FjemtyZG1raWJqcWR2dnhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjIxNTksImV4cCI6MjA3NTg5ODE1OX0.FnzI9WmpgiXVkeSR-cRznvf3QDG21Iu0gSpJn_Izc7Q';
+
+        let db;
+        const appContainer = document.getElementById('app');
+
+        if (SUPABASE_URL.startsWith('GANTI_DENGAN')) {
+            appContainer.innerHTML = `
+                <div class="flex items-center justify-center min-h-screen bg-gray-100">
+                    <div class="w-full max-w-2xl p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-red-400">
+                        <div class="text-center">
+                            <h1 class="text-3xl font-bold text-red-600"><i class="fas fa-exclamation-triangle"></i> Konfigurasi Diperlukan</h1>
+                            <p class="mt-4 text-gray-700">
+                                Aplikasi ini belum terhubung ke Supabase. Silakan buka file <code>gradeup_app.html</code>, cari bagian <strong>SUPABASE SETUP</strong>, dan ganti nilai placeholder <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> dengan kredensial dari proyek Supabase Anda.
+                            </p>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Setelah Anda mengganti kredensial, segarkan halaman ini.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            initializeApp();
+        }
+
+        // ===================================================================================
+        // SUPABASE API HELPER FUNCTIONS
+        // ===================================================================================
         const api = {
-            login: (identifier, password) => simulateRequest(() => db.users.find(u => (u.username === identifier || u.email === identifier) && u.password === password) || null),
-            register: (data) => simulateRequest(() => {
-                if (db.users.some(u => u.email === data.email)) {
-                    return { error: 'Email sudah terdaftar.' };
-                }
-                if (data.username && db.users.some(u => u.username === data.username)) {
-                    return { error: 'Username sudah digunakan.' };
-                }
-                const newUser = { 
-                    id: Date.now(), 
-                    ...data, 
-                    profilePicture: `https://placehold.co/128x128/fbcfe8/4a5568?text=${data.name.substring(0,2).toUpperCase()}`, 
-                    bio: '' 
-                };
-                db.users.push(newUser);
-                return newUser;
-            }),
-            getAssignmentsForStudent: (studentId) => simulateRequest(() => db.assignments),
-            getSubmissionsForStudent: (studentId) => simulateRequest(() => db.submissions.filter(s => s.studentId === studentId)),
-            getAssignmentsForTeacher: (teacherId) => simulateRequest(() => {
-                const courseIds = db.courses.filter(c => c.teacherId === teacherId).map(c => c.id);
-                return db.assignments.filter(a => courseIds.includes(a.courseId));
-            }),
-            getSubmissionsForAssignment: (assignmentId) => simulateRequest(() => db.submissions.filter(s => s.assignmentId === assignmentId)),
-            getUser: (userId) => simulateRequest(() => db.users.find(u => u.id === userId)),
-            getAllUsers: () => simulateRequest(() => db.users),
-            getStatistics: () => simulateRequest(() => {
-                const totalStudents = db.users.filter(u => u.role === 'student').length;
-                const totalSubmissions = db.submissions.length;
-                const totalAssignments = db.assignments.length;
-                const possibleSubmissions = totalStudents * totalAssignments;
-                return {
-                    totalUsers: db.users.length, totalAssignments, totalSubmissions,
-                    participationRate: possibleSubmissions > 0 ? ((totalSubmissions / possibleSubmissions) * 100).toFixed(1) : 0,
-                };
-            }),
-            createAssignment: (data) => simulateRequest(() => {
-                const newAssignment = { id: Date.now(), ...data };
-                db.assignments.unshift(newAssignment);
-                return newAssignment;
-            }),
-            updateAssignment: (assignmentId, data) => simulateRequest(() => {
-                const index = db.assignments.findIndex(a => a.id === assignmentId);
-                if (index !== -1) {
-                    db.assignments[index] = { ...db.assignments[index], ...data };
-                    return db.assignments[index];
-                }
-                return null;
-            }),
-            deleteAssignment: (assignmentId) => simulateRequest(() => {
-                db.assignments = db.assignments.filter(a => a.id !== assignmentId);
-                db.submissions = db.submissions.filter(s => s.assignmentId !== assignmentId);
-            }),
-            deleteSubmission: (submissionId) => simulateRequest(() => {
-                db.submissions = db.submissions.filter(s => s.id !== submissionId);
-            }),
-            updateUser: (userId, data) => simulateRequest(() => {
-                const userIndex = db.users.findIndex(u => u.id === userId);
-                if (userIndex !== -1) {
-                    const { password, ...restData } = data;
-                    const finalData = { ...db.users[userIndex], ...restData };
-                    if (password) {
-                        finalData.password = password;
+            // AUTH
+            async login(identifier, password) {
+                let email = identifier;
+                if (!identifier.includes('@')) {
+                    const { data: profile, error: profileError } = await db.from('profiles').select('email').eq('username', identifier).single();
+                    if (profileError || !profile) {
+                        throw new Error("Username yang Anda masukkan tidak terdaftar.");
                     }
-                    db.users[userIndex] = finalData;
-                    return db.users[userIndex];
+                    email = profile.email;
                 }
-                return null;
-            }),
-            deleteUser: (userId) => simulateRequest(() => {
-                db.users = db.users.filter(u => u.id !== userId);
-            }),
+                const { data, error } = await db.auth.signInWithPassword({ email, password });
+                if (error) {
+                    throw new Error("Email atau password yang Anda masukkan salah. Silakan coba lagi.");
+                }
+                return data.user;
+            },
+            async register(userData) {
+                const { data, error } = await db.auth.signUp({ 
+                    email: userData.email, 
+                    password: userData.password,
+                    options: {
+                        data: {
+                            name: userData.name,
+                            role: userData.role,
+                            username: userData.username,
+                            kelas: userData.kelas,
+                            profile_picture: `https://placehold.co/128x128/fbcfe8/4a5568?text=${userData.name.substring(0,2).toUpperCase()}`,
+                        }
+                    }
+                });
+                if (error) throw error;
+                return data.user;
+            },
+            async logout() {
+                const { error } = await db.auth.signOut();
+                if (error) throw error;
+            },
+            async updatePassword(newPassword) {
+                const { data, error } = await db.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                return data;
+            },
+            
+            // PROFILES
+            async getProfile(userId) {
+                const { data, error } = await db.from('profiles').select('*').eq('id', userId).single();
+                if (error) throw error;
+                return data;
+            },
+            async getAllUsers() {
+                 const { data, error } = await db.from('profiles').select('*');
+                 if (error) throw error;
+                 return data;
+            },
+            async updateUser(userId, profileData) {
+                const { data, error } = await db.from('profiles').update(profileData).eq('id', userId).select().single();
+                if (error) throw error;
+                return data;
+            },
+            async deleteUser(userId) {
+                console.warn("Fungsi deleteUser memerlukan RPC function di Supabase untuk keamanan.");
+                // Contoh pemanggilan jika sudah dibuat:
+                // const { error } = await db.rpc('delete_user_by_id', { user_id: userId });
+                // if (error) throw error;
+            },
+            
+            // DATA FETCHING
+            async getCoursesForTeacher(teacherId) {
+                const { data, error } = await db.from('courses').select('*').eq('teacher_id', teacherId);
+                if (error) throw error;
+                return data;
+            },
+            async getAssignment(assignmentId) {
+                const { data, error } = await db.from('assignments').select('*, courses(name)').eq('id', assignmentId).single();
+                if (error) throw error;
+                return data;
+            },
+            async getAssignmentsForStudent() {
+                const { data, error } = await db.from('assignments').select('*, courses(name)');
+                if (error) throw error;
+                return data;
+            },
+            async getAssignmentsForTeacher(teacherId) {
+                const { data, error } = await db.from('assignments').select('*, courses(name)').eq('teacher_id', teacherId);
+                if (error) throw error;
+                return data;
+            },
+            async createAssignment(assignmentData) {
+                const { data, error } = await db.from('assignments').insert(assignmentData).select().single();
+                if (error) throw error;
+                return data;
+            },
+            async updateAssignment(assignmentId, assignmentData) {
+                const { data, error } = await db.from('assignments').update(assignmentData).eq('id', assignmentId).select().single();
+                if (error) throw error;
+                return data;
+            },
+            async deleteAssignment(assignmentId) {
+                const { error } = await db.from('assignments').delete().eq('id', assignmentId);
+                if (error) throw error;
+            },
+            async getSubmissionsForStudent(studentId) {
+                const { data, error } = await db.from('submissions').select('*').eq('student_id', studentId);
+                if (error) throw error;
+                return data;
+            },
+            async getSubmissionsForAssignment(assignmentId) {
+                const { data, error } = await db.from('submissions').select('*, profiles(id, name)').eq('assignment_id', assignmentId);
+                if (error) throw error;
+                return data;
+            },
+            async createSubmission(submissionData) {
+                const { data, error } = await db.from('submissions').insert(submissionData).select().single();
+                if (error) throw error;
+                return data;
+            },
+            async updateSubmission(submissionId, submissionData) {
+                const { data, error } = await db.from('submissions').update(submissionData).eq('id', submissionId).select().single();
+                if (error) throw error;
+                return data;
+            },
+            async deleteSubmission(submissionId) {
+                const { error } = await db.from('submissions').delete().eq('id', submissionId);
+                if (error) throw error;
+            },
+            
+            // FILE UPLOAD
+            async uploadFile(file, path) {
+                const { data, error } = await db.storage.from('gradeup_files').upload(path, file, {
+                    cacheControl: '3600',
+                    upsert: true
+                });
+                if (error) throw error;
+                const { data: publicUrlData } = db.storage.from('gradeup_files').getPublicUrl(data.path);
+                return publicUrlData.publicUrl;
+            }
         };
         
         const state = {
@@ -213,6 +256,7 @@
         };
 
         function formatDate(dateString) {
+            if (!dateString) return 'N/A';
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             return new Date(dateString).toLocaleDateString('id-ID', options);
         }
@@ -229,7 +273,7 @@
             const container = document.getElementById('toast-container');
             if (!container) return;
             const toast = document.createElement('div');
-            const colors = { success: 'bg-green-500', error: 'bg-red-500' };
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
             toast.className = `px-6 py-3 rounded-full text-white shadow-lg fade-in`;
             toast.classList.add(colors[type] || 'bg-gray-800');
             toast.textContent = message;
@@ -249,43 +293,59 @@
                     button.innerHTML = `<i class="fas fa-spinner spinner mr-2"></i> Memproses...`;
                 } else {
                     button.disabled = false;
-                    button.innerHTML = button.dataset.originalHtml;
+                    if(button.dataset.originalHtml) button.innerHTML = button.dataset.originalHtml;
                 }
             }
         };
-        
-        const appContainer = document.getElementById('app');
 
         async function navigate(page, data = {}) {
             state.currentPage = page;
             state.currentViewData = {};
             state.isLoading = true;
-            render(); // Render a loading state immediately
+            render(); 
         
             try {
                 switch (page) {
-                    case 'studentDashboard':
+                    case 'studentDashboard': {
                         const [assignments, submissions] = await Promise.all([
-                            api.getAssignmentsForStudent(state.currentUser.id),
+                            api.getAssignmentsForStudent(),
                             api.getSubmissionsForStudent(state.currentUser.id)
                         ]);
                         state.currentViewData = { assignments, submissions };
                         break;
-                    case 'teacherDashboard':
+                    }
+                    case 'studentAssignmentDetail': {
+                        const [assignment, submissions] = await Promise.all([
+                            api.getAssignment(state.currentAssignmentId),
+                            api.getSubmissionsForStudent(state.currentUser.id)
+                        ]);
+                        state.currentViewData = { assignment, submission: submissions.find(s => s.assignment_id === state.currentAssignmentId) };
+                        break;
+                    }
+                    case 'teacherDashboard': {
                         state.currentViewData.assignments = await api.getAssignmentsForTeacher(state.currentUser.id);
                         break;
-                    case 'adminDashboard':
+                    }
+                    case 'teacherAssignmentDetail': {
+                         const [assignment, submissions] = await Promise.all([
+                            api.getAssignment(state.currentAssignmentId),
+                            api.getSubmissionsForAssignment(state.currentAssignmentId)
+                        ]);
+                        state.currentViewData = { assignment, submissions };
+                        break;
+                    }
+                    case 'adminDashboard': {
                          if(state.adminCurrentTab === 'users') {
-                            state.currentViewData.users = await api.getAllUsers();
+                             state.currentViewData.users = await api.getAllUsers();
                          } else {
-                            state.currentViewData.stats = await api.getStatistics();
+                             state.currentViewData.stats = { totalUsers: 'N/A', totalAssignments: 'N/A', totalSubmissions: 'N/A', participationRate: 'N/A' };
                          }
                         break;
-                    // Other pages that need data fetching can be added here
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load page data:", error);
-                showToast("Gagal memuat data.", "error");
+                showToast(error.message || "Gagal memuat data.", "error");
             }
         
             state.isLoading = false;
@@ -293,6 +353,7 @@
         }
 
         function render() {
+            if(!appContainer) return;
             appContainer.innerHTML = '';
             let content = '';
             if (state.currentUser) content += renderHeader();
@@ -320,12 +381,12 @@
             appContainer.innerHTML = content;
             attachEventListeners();
         }
-
+        
         function renderHeader() {
-            const { name, role, profilePicture } = state.currentUser;
+            const { name, role, profile_picture } = state.currentUser;
             const roleDisplay = { student: 'Siswa', teacher: 'Guru', admin: 'Administrator' };
             const dashboardPage = role === 'student' ? 'studentDashboard' : (role === 'teacher' ? 'teacherDashboard' : 'adminDashboard');
-            return `<header class="header-bg shadow-md sticky top-0 z-50"><nav class="container mx-auto px-6 py-3 flex justify-between items-center"><a href="#" class="text-2xl font-bold text-brand" data-page="${dashboardPage}"><i class="fas fa-leaf"></i> GradeUp</a><div class="relative"><button id="profile-menu-btn" class="flex items-center space-x-3 p-2 rounded-full hover:bg-pink-200/50"><img src="${profilePicture}" alt="Foto Profil" class="w-10 h-10 rounded-full object-cover"><div class="text-right hidden sm:block"><p class="font-semibold">${name}</p><p class="text-sm text-gray-500">${roleDisplay[role]}</p></div></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">${role !== 'admin' ? `<a href="#" data-page="profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50"><i class="fas fa-user-edit w-6"></i> Profil Saya</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50"><i class="fas fa-sign-out-alt w-6"></i> Logout</a></div></div></nav></header>`;
+            return `<header class="header-bg shadow-md sticky top-0 z-50"><nav class="container mx-auto px-6 py-3 flex justify-between items-center"><a href="#" class="text-2xl font-bold text-brand" data-page="${dashboardPage}"><i class="fas fa-leaf"></i> GradeUp</a><div class="relative"><button id="profile-menu-btn" class="flex items-center space-x-3 p-2 rounded-full hover:bg-pink-200/50"><img src="${profile_picture}" alt="Foto Profil" class="w-10 h-10 rounded-full object-cover"><div class="text-right hidden sm:block"><p class="font-semibold">${name}</p><p class="text-sm text-gray-500">${roleDisplay[role]}</p></div></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">${role !== 'admin' ? `<a href="#" data-page="profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50"><i class="fas fa-user-edit w-6"></i> Profil Saya</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50"><i class="fas fa-sign-out-alt w-6"></i> Logout</a></div></div></nav></header>`;
         }
         
         function renderConfirmationModal() {
@@ -333,7 +394,7 @@
         }
 
         function renderChangePasswordModal() {
-            return `<div id="password-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Ganti Password</h2><button id="close-password-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button></div><form id="change-password-form" class="mt-6 space-y-4"><div><label class="block text-sm font-medium text-gray-700">Password Lama</label><input type="password" name="oldPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Password Baru</label><input type="password" name="newPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Konfirmasi Password Baru</label><input type="password" name="confirmPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><p id="password-error" class="text-sm text-red-600"></p><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-password-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Perubahan</button></div></form></div></div>`;
+            return `<div id="password-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Ganti Password</h2><button id="close-password-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button></div><form id="change-password-form" class="mt-6 space-y-4"><div><label class="block text-sm font-medium text-gray-700">Password Baru</label><input type="password" name="newPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><p id="password-error" class="text-sm text-red-600"></p><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-password-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Perubahan</button></div></form></div></div>`;
         }
 
         function renderLogin() {
@@ -341,154 +402,106 @@
         }
 
         function renderRegister() {
-            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><h2 class="text-3xl font-bold text-center text-brand">Registrasi Mandiri</h2><form id="register-form" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Nama Lengkap</label><input name="name" type="text" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Nama Lengkap Sesuai Absen"></div><div><label class="text-sm font-medium text-gray-700">Email</label><input name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="contoh@sekolah.id"></div><div><label class="text-sm font-medium text-gray-700">Password</label><input name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="********"></div><div><label class="text-sm font-medium text-gray-700">Daftar sebagai</label><select name="role" id="role-select" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option></select></div><div id="student-fields" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Username</label><input name="username" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Username unik, tanpa spasi"></div><div><label class="text-sm font-medium text-gray-700">Kelas</label><input name="kelas" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Contoh: XI-MIPA 1"></div></div><p id="register-error" class="text-sm text-red-600"></p><button type="submit" class="w-full py-3 px-4 rounded-full text-white bg-brand hover:bg-brand-dark">Daftar</button></form><p class="text-sm text-center text-gray-600">Sudah punya akun? <a href="#" data-page="login" class="font-medium text-brand hover:underline">Login</a></p></div></div>`;
+            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><h2 class="text-3xl font-bold text-center text-brand">Registrasi Mandiri</h2><form id="register-form" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Nama Lengkap</label><input name="name" type="text" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Nama Lengkap Sesuai Absen"></div><div><label class="text-sm font-medium text-gray-700">Email</label><input name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="contoh@sekolah.id"></div><div><label class="text-sm font-medium text-gray-700">Password</label><input name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="********"></div><div><label class="text-sm font-medium text-gray-700">Daftar sebagai</label><select name="role" id="role-select" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option></select></div><div id="student-fields" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Username</label><input name="username" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Username unik, tanpa spasi" required></div><div><label class="text-sm font-medium text-gray-700">Kelas</label><input name="kelas" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Contoh: XI-MIPA 1" required></div></div><p id="register-error" class="text-sm text-red-600"></p><button type="submit" class="w-full py-3 px-4 rounded-full text-white bg-brand hover:bg-brand-dark">Daftar</button></form><p class="text-sm text-center text-gray-600">Sudah punya akun? <a href="#" data-page="login" class="font-medium text-brand hover:underline">Login</a></p></div></div>`;
         }
         
         function renderStudentDashboard() {
             const { assignments, submissions } = state.currentViewData;
+            if(!assignments || !submissions) return '';
             
-            const todo = assignments.filter(a => !submissions.find(s => s.assignmentId === a.id) && new Date(a.deadline) > new Date());
-            const done = assignments.filter(a => submissions.find(s => s.assignmentId === a.id));
-            const late = assignments.filter(a => !submissions.find(s => s.assignmentId === a.id) && new Date(a.deadline) < new Date());
+            const todo = assignments.filter(a => !submissions.find(s => s.assignment_id === a.id) && new Date(a.deadline) > new Date());
+            const done = assignments.filter(a => submissions.find(s => s.assignment_id === a.id));
+            const late = assignments.filter(a => !submissions.find(s => s.assignment_id === a.id) && new Date(a.deadline) < new Date());
 
             const createCard = (a) => {
-                const sub = submissions.find(s => s.assignmentId === a.id);
+                const sub = submissions.find(s => s.assignment_id === a.id);
                 const status = getStatus(a, sub);
-                const course = db.courses.find(c => c.id === a.courseId);
+                const courseName = a.courses ? a.courses.name : 'Mata Pelajaran';
                 let badgeColor = 'bg-yellow-100 text-yellow-800';
                 if(status.color === 'green') badgeColor = 'bg-green-100 text-green-800';
                 if(status.color === 'red') badgeColor = 'bg-red-100 text-red-800';
-                return `<div class="task-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 cursor-pointer" data-assignment-id="${a.id}"><div class="flex justify-between items-start"><div><p class="text-sm font-medium text-brand">${course.name}</p><h3 class="text-lg font-bold mt-1">${a.title}</h3></div><span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}">${status.text}</span></div><p class="text-sm text-gray-500 mt-3">Deadline: ${formatDate(a.deadline)}</p>${status.color === 'green' && status.grade ? `<p class="text-lg font-bold text-gray-700 mt-2">Nilai: <span class="text-blue-600">${status.grade}</span></p>` : ''}</div>`;
+                return `<div class="task-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 cursor-pointer" data-assignment-id="${a.id}"><div class="flex justify-between items-start"><div><p class="text-sm font-medium text-brand">${courseName}</p><h3 class="text-lg font-bold mt-1">${a.title}</h3></div><span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}">${status.text}</span></div><p class="text-sm text-gray-500 mt-3">Deadline: ${formatDate(a.deadline)}</p>${status.color === 'green' && status.grade ? `<p class="text-lg font-bold text-gray-700 mt-2">Nilai: <span class="text-blue-600">${status.grade}</span></p>` : ''}</div>`;
             };
 
             return `<main class="container mx-auto p-6"><h1 class="text-3xl font-bold mb-6">Dashboard Siswa</h1><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="bg-white/60 p-4 rounded-lg"><h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center"><i class="fas fa-list-check text-blue-500 mr-3"></i>Perlu Dikerjakan</h2><div class="space-y-4">${todo.length > 0 ? todo.map(createCard).join('') : '<p class="text-gray-500">Tidak ada tugas baru. Selamat!</p>'}</div></div><div class="bg-white/60 p-4 rounded-lg"><h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center"><i class="fas fa-check-double text-green-500 mr-3"></i>Selesai & Riwayat</h2><div class="space-y-4">${done.length > 0 ? done.map(createCard).join('') : '<p class="text-gray-500">Belum ada tugas yang selesai.</p>'}</div></div><div class="bg-white/60 p-4 rounded-lg"><h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center"><i class="fas fa-clock-rotate-left text-red-500 mr-3"></i>Terlambat</h2><div class="space-y-4">${late.length > 0 ? late.map(createCard).join('') : '<p class="text-gray-500">Tidak ada tugas yang terlambat.</p>'}</div></div></div></main>`;
         }
 
         function renderStudentAssignmentDetail() {
-            const assignment = db.assignments.find(a => a.id === state.currentAssignmentId);
-            const submission = db.submissions.find(s => s.assignmentId === assignment.id && s.studentId === state.currentUser.id);
-            const course = db.courses.find(c => c.id === assignment.courseId);
-            const isLate = !submission && new Date() > new Date(assignment.deadline);
-            const canUnsend = submission && !submission.grade && new Date() < new Date(assignment.deadline);
+            const { assignment, submission } = state.currentViewData;
+            if (!assignment) return `<div>Memuat detail tugas...</div>`;
 
-            return `<main class="container mx-auto p-6"><button class="back-to-dashboard mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg inline-flex items-center" data-page="studentDashboard"><i class="fas fa-arrow-left mr-2"></i>Kembali</button><div class="bg-white p-8 rounded-xl shadow-lg"><span class="text-sm font-semibold px-3 py-1 rounded-full bg-pink-100 text-brand">${course.name}</span><h1 class="text-4xl font-bold mt-4">${assignment.title}</h1><p class="text-md text-gray-500 mt-2">Deadline: <span class="font-semibold text-red-600">${formatDate(assignment.deadline)}</span></p><div class="mt-6 border-t pt-6"><h2 class="text-xl font-semibold mb-3">Deskripsi Tugas</h2><p class="text-gray-700 whitespace-pre-wrap">${assignment.description}</p><a href="${assignment.fileUrl}" class="inline-block mt-4 text-brand font-medium hover:underline"><i class="fas fa-paperclip mr-2"></i>Download File Pendukung</a></div> ${submission ? `<div class="mt-6 p-6 bg-green-50 border-l-4 border-green-500 rounded-r-lg"><h3 class="text-lg font-semibold text-green-800">Tugas Anda</h3><p class="text-sm text-gray-600 mt-2">Dikumpulkan pada: ${formatDate(submission.submittedAt)}</p><a href="${submission.fileUrl}" class="inline-block mt-3 text-brand font-medium hover:underline"><i class="fas fa-file-arrow-down mr-2"></i>Lihat File Terkirim</a> ${canUnsend ? `<button class="unsend-submission-btn ml-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded-lg text-sm" data-submission-id="${submission.id}"><i class="fas fa-undo mr-2"></i>Batalkan Kiriman</button>` : ''}</div>` : `<div class="mt-6 p-6 ${isLate ? 'bg-red-50 border-l-4 border-red-500' : 'bg-blue-50 border-l-4 border-blue-500'} rounded-r-lg"><h3 class="text-lg font-semibold ${isLate ? 'text-red-800' : 'text-blue-800'}">Kumpulkan Tugas</h3> ${isLate ? '<p class="text-red-700 font-medium mb-3">Anda terlambat mengumpulkan tugas ini.</p>' : ''}<form id="submission-form"><label for="file-upload" class="block text-sm font-medium text-gray-700">Upload file (PDF, DOCX, JPG)</label><input type="file" id="file-upload" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-brand hover:file:bg-pink-100"/><button type="submit" class="mt-4 w-full sm:w-auto inline-flex justify-center items-center px-6 py-2 border border-transparent text-base font-medium rounded-full text-white bg-brand hover:bg-brand-dark"><i class="fas fa-upload mr-2"></i>Kirim Tugas</button></form></div>`} ${(submission && submission.grade) ? `<div class="mt-8 p-6 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg"><h3 class="text-xl font-bold text-gray-800">Penilaian & Feedback</h3><p class="text-4xl font-bold text-blue-600 my-3">${submission.grade}</p><p class="text-gray-700 font-semibold">Komentar Guru:</p><blockquote class="mt-2 pl-4 border-l-2 border-gray-300 italic text-gray-600">${submission.feedback}</blockquote></div>` : ''}</div></main>`;
-        }
+            const status = getStatus(assignment, submission);
+            const deadline = new Date(assignment.deadline);
+            const now = new Date();
+            const isLate = now > deadline;
 
-        // --- TEACHER VIEWS ---
-        function renderTeacherDashboard() {
-            const { assignments = [] } = state.currentViewData;
-            const searchTerm = (document.getElementById('search-assignments')?.value || '').toLowerCase();
-            const filteredAssignments = assignments.filter(a => a.title.toLowerCase().includes(searchTerm));
+            const renderSubmissionForm = (isUpdate = false) => {
+                 return `
+                    <div class="mt-6 bg-pink-50 border-l-4 border-pink-400 p-4 rounded-r-lg">
+                        <h3 class="text-lg font-semibold text-gray-800">${isUpdate ? 'Kirim Ulang Tugas Anda' : (isLate ? 'Anda Terlambat' : 'Kumpulkan Tugas Anda')}</h3>
+                        <form id="submission-form" class="mt-4 space-y-4">
+                            <div>
+                                <label for="submission-file" class="block text-sm font-medium text-gray-700">Pilih File ${isUpdate ? 'Baru' : ''}</label>
+                                <input type="file" id="submission-file" name="submissionFile" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-brand hover:file:bg-pink-200 cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="submission-notes" class="block text-sm font-medium text-gray-700">Catatan (Opsional)</label>
+                                <textarea id="submission-notes" name="submissionNotes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand" placeholder="Tambahkan catatan untuk guru Anda..."></textarea>
+                            </div>
+                            <button type="submit" class="w-full sm:w-auto inline-flex justify-center py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark">
+                                <i class="fas fa-upload mr-2"></i> ${isUpdate ? 'Kirim Ulang' : 'Kumpulkan'}
+                            </button>
+                        </form>
+                    </div>`;
+            };
 
-            const assignmentCards = filteredAssignments.map(a => {
-                const course = db.courses.find(c => c.id === a.courseId);
-                const submissions = db.submissions.filter(s => s.assignmentId === a.id);
-                const graded = submissions.filter(s => s.grade !== null).length;
-                
-                return `<div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 relative"><div class="absolute top-3 right-3 flex space-x-2"><button class="edit-assignment-btn text-blue-400 hover:text-blue-600" data-assignment-id="${a.id}"><i class="fas fa-edit"></i></button><button class="delete-assignment-btn text-red-400 hover:text-red-600" data-assignment-id="${a.id}"><i class="fas fa-trash-alt"></i></button></div><div class="task-card cursor-pointer" data-assignment-id="${a.id}"><p class="text-sm font-medium text-brand">${course.name}</p><h3 class="text-lg font-bold mt-1">${a.title}</h3><p class="text-sm text-gray-500 mt-3">Deadline: ${formatDate(a.deadline)}</p><div class="mt-4 pt-4 border-t flex justify-between items-center text-sm"><span class="font-semibold text-gray-700">${submissions.length} Siswa Mengumpulkan</span><span class="text-green-600 font-medium">${graded} / ${submissions.length} Dinilai</span></div></div></div>`;
-            }).join('');
-            
-            const emptyState = `
-                <div class="col-span-full text-center py-16">
-                    <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    <h3 class="mt-4 text-xl font-semibold text-gray-800">Belum ada tugas</h3>
-                    <p class="mt-2 text-gray-500">Anda belum membuat tugas apapun. Buat tugas pertama Anda sekarang.</p>
-                    <button id="create-assignment-btn" class="mt-6 bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-full flex items-center mx-auto"><i class="fas fa-plus mr-2"></i>Buat Tugas Pertama Anda</button>
-                </div>
-            `;
-
-            return `<main class="container mx-auto p-6"><div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"><h1 class="text-3xl font-bold">Manajemen Tugas</h1><div class="flex items-center gap-4"><div class="relative"><input id="search-assignments" type="text" placeholder="Cari tugas..." class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-full"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i></div><button id="create-assignment-btn-main" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-full flex items-center flex-shrink-0"><i class="fas fa-plus mr-2"></i>Buat Tugas</button></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${filteredAssignments.length > 0 ? assignmentCards : emptyState}</div></main>${renderCreateAssignmentModal()}`;
-        }
-        
-        function renderCreateAssignmentModal() {
-             const courseOptions = db.courses.filter(c => c.teacherId === state.currentUser.id).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-             return `<div id="assignment-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8 fade-in"><h2 id="assignment-modal-title" class="text-2xl font-bold mb-6">Buat Tugas Baru</h2><form id="assignment-form" class="space-y-4"><input type="hidden" name="id"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-gray-700">Judul Tugas</label><input type="text" name="title" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Mata Pelajaran</label><select name="courseId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">${courseOptions}</select></div></div><div><label class="block text-sm font-medium text-gray-700">Deadline</label><input name="deadline" type="datetime-local" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Deskripsi</label><textarea name="description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></textarea></div><div><label class="block text-sm font-medium text-gray-700">File Pendukung (Opsional)</label><input name="file" type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-brand hover:file:bg-pink-100"></div><div class="mt-8 flex justify-end space-x-3"><button type="button" id="cancel-modal-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" id="assignment-submit-btn" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Tugas</button></div></form></div></div>`;
-        }
-        
-        function renderTeacherAssignmentDetail() {
-            const assignment = db.assignments.find(a => a.id === state.currentAssignmentId);
-            if (!assignment) { navigate('teacherDashboard'); return ''; }
-            const submissions = db.submissions.filter(s => s.assignmentId === assignment.id);
-            const course = db.courses.find(c => c.id === assignment.courseId);
-
-            const submissionRows = submissions.map(sub => {
-                const student = db.users.find(u => u.id === sub.studentId);
-                return `<tr class="hover:bg-gray-50"><td class="p-4 font-medium text-gray-900">${student.name}</td><td class="p-4 text-gray-600">${formatDate(sub.submittedAt)}</td><td class="p-4"><a href="${sub.fileUrl}" target="_blank" class="text-brand hover:underline">Lihat File</a></td><td class="p-4 font-semibold ${sub.grade ? 'text-green-600' : 'text-yellow-600'}">${sub.grade ? sub.grade : 'Belum Dinilai'}</td><td class="p-4"><button class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 px-3 rounded-lg grade-btn" data-submission-id="${sub.id}">${sub.grade ? 'Edit Nilai' : 'Beri Nilai'}</button></td></tr>`;
-            }).join('');
-
-            return `<main class="container mx-auto p-6"><button class="back-to-dashboard mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg inline-flex items-center" data-page="teacherDashboard"><i class="fas fa-arrow-left mr-2"></i>Kembali</button><div class="bg-white p-8 rounded-xl shadow-lg"><div class="flex justify-between items-start"><div class="flex-1"><span class="text-sm font-semibold px-3 py-1 rounded-full bg-pink-100 text-brand">${course.name}</span><h1 class="text-4xl font-bold mt-4">${assignment.title}</h1><p class="text-md text-gray-500 mt-2">Deadline: <span class="font-semibold text-red-600">${formatDate(assignment.deadline)}</span></p></div><button class="delete-assignment-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg" data-assignment-id="${assignment.id}"><i class="fas fa-trash-alt mr-2"></i>Hapus Tugas</button></div><div class="mt-8"><h2 class="text-2xl font-semibold mb-4">Pengumpulan Siswa</h2><div class="overflow-x-auto rounded-lg border border-gray-200"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-50"><tr><th class="p-4 text-left font-semibold text-gray-600">Nama Siswa</th><th class="p-4 text-left font-semibold text-gray-600">Waktu Kumpul</th><th class="p-4 text-left font-semibold text-gray-600">File</th><th class="p-4 text-left font-semibold text-gray-600">Nilai</th><th class="p-4 text-left font-semibold text-gray-600">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">${submissions.length > 0 ? submissionRows : '<tr><td colspan="5" class="p-4 text-center text-gray-500">Belum ada siswa yang mengumpulkan.</td></tr>'}</tbody></table></div></div></div></main>${renderGradingModal()}`;
-        }
-
-        function renderGradingModal() {
-            return `<div id="grading-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-8 fade-in"><h2 class="text-2xl font-bold mb-6">Beri Nilai & Feedback</h2><form id="grading-form" class="space-y-4"><div><label class="block text-sm font-medium text-gray-700">Nilai (0-100)</label><input id="grade-input" type="number" min="0" max="100" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Feedback / Komentar</label><textarea id="feedback-input" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></textarea></div><div class="mt-8 flex justify-end space-x-3"><button type="button" id="cancel-grading-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Simpan Penilaian</button></div></form></div></div>`;
-        }
-        
-        function renderAdminDashboard() {
-            return `<main class="container mx-auto p-6"><h1 class="text-3xl font-bold mb-6">Admin Panel</h1><div class="bg-white p-8 rounded-xl shadow-lg"><div class="mb-6 border-b border-gray-200"><nav class="-mb-px flex space-x-8"><button class="admin-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${state.adminCurrentTab === 'users' ? 'tab-active' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}" data-tab="users">Manajemen Pengguna</button><button class="admin-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${state.adminCurrentTab === 'monitoring' ? 'tab-active' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}" data-tab="monitoring">Monitoring Aktivitas</button></nav></div><div id="admin-content">${state.adminCurrentTab === 'users' ? renderAdminUserManagement() : renderAdminMonitoring()}</div></div></main>${renderEditUserModal()}`;
-        }
-
-        function renderEditUserModal() {
-            return `<div id="edit-user-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><h2 class="text-2xl font-bold mb-6">Edit Pengguna</h2><form id="edit-user-form" class="space-y-4"><input type="hidden" id="edit-user-id"><div><label class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="edit-user-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div id="edit-student-fields" class="hidden space-y-4"><div><label class="block text-sm font-medium text-gray-700">Username</label><input type="text" id="edit-user-username" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium text-gray-700">Kelas</label><input type="text" id="edit-user-kelas" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div></div><div><label class="block text-sm font-medium text-gray-700">Email</label><input type="email" id="edit-user-email" disabled class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100"></div><div><label class="block text-sm font-medium text-gray-700">Peran</label><select id="edit-user-role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option><option value="admin">Admin</option></select></div><div class="border-t pt-4 mt-4"><label class="block text-sm font-medium text-gray-700">Reset Password (Opsional)</label><input type="password" id="edit-user-password" placeholder="Masukkan password baru" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div class="mt-8 flex justify-end space-x-3"><button type="button" id="cancel-edit-user-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div></form></div></div>`;
-        }
-
-        function renderAdminUserManagement() {
-            const { users = [] } = state.currentViewData;
-            const searchTerm = (document.getElementById('search-users')?.value || '').toLowerCase();
-            const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchTerm) || u.email.toLowerCase().includes(searchTerm) || (u.username && u.username.toLowerCase().includes(searchTerm)));
-
-            const roleDisplay = { student: 'Siswa', teacher: 'Guru', admin: 'Admin' }; 
-            const roleColor = { student: 'bg-blue-100 text-blue-800', teacher: 'bg-green-100 text-green-800', admin: 'bg-purple-100 text-purple-800' };
-            const userRows = filteredUsers.map(u => `<tr class="hover:bg-gray-50"><td class="p-4 flex items-center space-x-3"><img src="${u.profilePicture}" alt="Foto Profil" class="w-10 h-10 rounded-full object-cover"><span class="font-medium text-gray-900">${u.name}</span></td><td class="p-4 text-gray-600">${u.email}</td><td class="p-4 text-gray-600">${u.username || '-'}</td><td class="p-4"><span class="px-2 py-1 font-semibold leading-tight text-xs rounded-full ${roleColor[u.role]}">${roleDisplay[u.role]}</span></td><td class="p-4 flex space-x-2"><button class="edit-user-btn text-blue-600 hover:text-blue-800" data-user-id="${u.id}"><i class="fas fa-edit"></i></button><button class="delete-user-btn text-red-600 hover:text-red-800" data-user-id="${u.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
-            
-            return `<div><div class="relative mb-4"><input id="search-users" type="text" placeholder="Cari berdasarkan nama, email, atau username..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i></div><div class="overflow-x-auto rounded-lg border border-gray-200"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-100"><tr><th class="p-4 text-left font-semibold text-gray-600">Nama</th><th class="p-4 text-left font-semibold text-gray-600">Email</th><th class="p-4 text-left font-semibold text-gray-600">Username</th><th class="p-4 text-left font-semibold text-gray-600">Peran</th><th class="p-4 text-left font-semibold text-gray-600">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">${userRows}</tbody></table></div></div>`;
-        }
-
-        function renderAdminMonitoring() {
-            const { stats } = state.currentViewData;
-            if(!stats) return '';
-            return `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="bg-blue-50 p-6 rounded-lg border border-blue-200"><h3 class="text-lg font-medium text-blue-800">Total Pengguna</h3><p class="text-4xl font-bold text-blue-600 mt-2">${stats.totalUsers}</p></div><div class="bg-green-50 p-6 rounded-lg border border-green-200"><h3 class="text-lg font-medium text-green-800">Total Tugas</h3><p class="text-4xl font-bold text-green-600 mt-2">${stats.totalAssignments}</p></div><div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200"><h3 class="text-lg font-medium text-yellow-800">Total Pengumpulan</h3><p class="text-4xl font-bold text-yellow-600 mt-2">${stats.totalSubmissions}</p></div><div class="bg-pink-50 p-6 rounded-lg border border-pink-200"><h3 class="text-lg font-medium text-pink-800">Tingkat Partisipasi</h3><p class="text-4xl font-bold text-pink-600 mt-2">${stats.participationRate}%</p></div></div>`;
-        }
-
-        function renderProfilePage() {
-            const user = state.currentUser;
-            if (!user || user.role === 'admin') { 
-                navigate('login');
-                return '';
+            let submissionContent = '';
+            if (submission) {
+                submissionContent = `
+                    <div class="mt-8 bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
+                        <h3 class="text-xl font-bold text-green-800 mb-4">Tugas Telah Dikumpulkan</h3>
+                        <div class="space-y-3 text-gray-700">
+                            <p><strong class="font-medium w-32 inline-block">Tanggal Kumpul:</strong> ${formatDate(submission.submitted_at)}</p>
+                            <p><strong class="font-medium w-32 inline-block">File Anda:</strong> <a href="${submission.file_url}" target="_blank" class="text-brand hover:underline font-semibold">${submission.file_url.split('/').pop()} <i class="fas fa-external-link-alt text-xs ml-1"></i></a></p>
+                            ${submission.notes ? `<p><strong class="font-medium w-32 inline-block">Catatan:</strong> ${submission.notes}</p>` : ''}
+                            <div class="pt-2">
+                                <p class="text-2xl"><strong class="font-medium">Nilai:</strong> <span class="font-bold text-blue-600">${submission.grade ?? 'Belum dinilai'}</span></p>
+                            </div>
+                        </div>
+                        ${!isLate ? `
+                        <div class="mt-6">
+                             <p class="text-sm text-gray-600 mb-2">Anda dapat mengirimkan ulang sebelum deadline.</p>
+                             <button id="resubmit-btn" class="text-sm font-semibold text-brand hover:underline">Kirim Ulang Tugas</button>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                 submissionContent = renderSubmissionForm();
             }
-
-            const infoTabActive = state.profileCurrentTab === 'info';
-            const securityTabActive = state.profileCurrentTab === 'security';
-            const dashboardPage = user.role === 'student' ? 'studentDashboard' : 'teacherDashboard';
 
             return `
                 <main class="container mx-auto p-6">
-                    <button class="back-to-dashboard mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg inline-flex items-center" data-page="${dashboardPage}"><i class="fas fa-arrow-left mr-2"></i>Kembali ke Dashboard</button>
-
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                        <div class="md:flex">
-                            <div class="md:w-1/3 p-8 bg-pink-50/50 border-r border-gray-200 flex flex-col items-center text-center">
-                                <div class="relative group">
-                                    <img src="${user.profilePicture}" alt="Foto Profil" class="w-32 h-32 rounded-full object-cover ring-4 ring-pink-200">
-                                    <label for="profile-picture-upload" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                                        <i class="fas fa-camera fa-2x"></i>
-                                        <input type="file" id="profile-picture-upload" class="hidden" accept="image/*">
-                                    </label>
-                                </div>
-                                <h2 class="text-2xl font-bold mt-4">${user.name}</h2>
-                                ${user.role === 'student' ? `<p class="text-gray-600 font-semibold">${user.username} - ${user.kelas}</p>` : ''}
-                                <span class="text-sm font-semibold px-3 py-1 rounded-full bg-pink-100 text-brand mt-2">${user.role === 'student' ? 'Siswa' : 'Guru'}</span>
-                                <p class="text-gray-600 mt-4 italic">"${user.bio || 'Belum ada biografi.'}"</p>
+                    <div class="mb-6">
+                        <button data-page="studentDashboard" class="text-brand hover:underline font-semibold"><i class="fas fa-arrow-left mr-2"></i> Kembali ke Dashboard</button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <div class="p-8">
+                            <p class="text-sm font-medium text-brand">${assignment.courses?.name || 'Mata Pelajaran'}</p>
+                            <h1 class="text-4xl font-bold mt-1 text-gray-800">${assignment.title}</h1>
+                            <p class="text-gray-500 mt-3">Deadline: <span class="font-semibold">${formatDate(assignment.deadline)}</span></p>
+                            <div class="mt-6 prose max-w-none text-gray-700">
+                                ${assignment.description}
                             </div>
-
-                            <div class="md:w-2/3 p-8">
-                                <div class="mb-6 border-b border-gray-200">
-                                    <nav class="-mb-px flex space-x-8">
-                                        <button class="profile-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${infoTabActive ? 'tab-active' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}" data-tab="info">Profil Saya</button>
-                                        <button class="profile-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${securityTabActive ? 'tab-active' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}" data-tab="security">Keamanan Akun</button>
-                                    </nav>
+                            <hr class="my-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Status Pengumpulan</h2>
+                                <div class="mt-4 flex items-center space-x-3">
+                                    <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-${status.color}-100 text-${status.color}-800">${status.text}</span>
+                                    ${status.grade ? `<span class="text-lg font-bold">Nilai: ${status.grade}</span>` : ''}
                                 </div>
-                                <div id="profile-content">
-                                    ${infoTabActive ? renderProfileInfoForm() : renderProfileSecurity()}
+                                <div id="submission-section">
+                                   ${submissionContent}
                                 </div>
                             </div>
                         </div>
@@ -496,347 +509,365 @@
                 </main>
             `;
         }
+        
+        function renderTeacherDashboard() { 
+             const { assignments } = state.currentViewData;
+            if (!assignments) return '';
 
-        function renderProfileInfoForm() {
-            const user = state.currentUser;
+            const createAssignmentCard = (assignment) => {
+                return `
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-5">
+                             <p class="text-sm font-medium text-brand">${assignment.courses?.name || 'Mata Pelajaran'}</p>
+                             <h3 class="text-lg font-bold mt-1 task-card cursor-pointer" data-assignment-id="${assignment.id}">${assignment.title}</h3>
+                            <p class="text-sm text-gray-500 mt-3">Deadline: ${formatDate(assignment.deadline)}</p>
+                        </div>
+                        <div class="bg-gray-50 px-5 py-3 flex justify-end space-x-3">
+                            <button class="edit-assignment-btn text-blue-500 hover:text-blue-700 text-sm font-semibold" data-assignment-id="${assignment.id}"><i class="fas fa-pencil-alt mr-1"></i> Edit</button>
+                            <button class="delete-assignment-btn text-red-500 hover:text-red-700 text-sm font-semibold" data-assignment-id="${assignment.id}"><i class="fas fa-trash mr-1"></i> Hapus</button>
+                        </div>
+                    </div>
+                `;
+            };
+
             return `
-                <form id="edit-profile-form">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                            <input type="text" id="profile-name" value="${user.name}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
-                        </div>
-                        ${user.role === 'student' ? `
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Username</label>
-                            <input type="text" id="profile-username" value="${user.username}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
-                        </div>
-                        ` : ''}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Alamat Email</label>
-                            <input type="email" id="profile-email" value="${user.email}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Biografi Singkat</label>
-                            <textarea id="profile-bio" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">${user.bio || ''}</textarea>
-                            <p class="mt-2 text-sm text-gray-500">Ceritakan sedikit tentang diri Anda.</p>
-                        </div>
+                <main class="container mx-auto p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold">Dashboard Guru</h1>
+                        <button id="add-assignment-btn" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Buat Tugas Baru
+                        </button>
                     </div>
-                    <div class="mt-8 pt-5 border-t border-gray-200 flex justify-end">
-                         <button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Perubahan</button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${assignments.length > 0 ? assignments.map(createAssignmentCard).join('') : '<p class="text-gray-500 col-span-full">Anda belum membuat tugas apapun.</p>'}
                     </div>
-                </form>
+                </main>
+                ${renderAssignmentModal()}
             `;
         }
 
-        function renderProfileSecurity() {
+        function renderAssignmentModal(assignment = null) {
+            const isEditing = !!assignment;
+            const deadlineValue = assignment ? new Date(assignment.deadline).toISOString().substring(0, 16) : '';
             return `
-                <div>
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">Ubah Password</h3>
-                    <p class="mt-1 text-sm text-gray-500">Pastikan Anda menggunakan password yang kuat dan unik untuk menjaga keamanan akun Anda.</p>
-                    <button id="show-password-modal-btn" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Ubah Password Anda</button>
+                <div id="assignment-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8 fade-in">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-2xl font-bold">${isEditing ? 'Edit Tugas' : 'Buat Tugas Baru'}</h2>
+                            <button id="close-assignment-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                        </div>
+                        <form id="assignment-form" class="mt-6 space-y-4">
+                            <input type="hidden" name="assignmentId" value="${assignment?.id || ''}">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Judul Tugas</label>
+                                <input type="text" name="title" value="${assignment?.title || ''}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Mata Pelajaran</label>
+                                <select name="courseId" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                                   <!-- TODO: Populate courses from API -->
+                                   <option value="1" ${assignment?.course_id === 1 ? 'selected' : ''}>Bahasa Indonesia</option>
+                                   <option value="2" ${assignment?.course_id === 2 ? 'selected' : ''}>Matematika</option>
+                                   <option value="3" ${assignment?.course_id === 3 ? 'selected' : ''}>Biologi</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                                <textarea name="description" rows="5" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">${assignment?.description || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Deadline</label>
+                                <input type="datetime-local" name="deadline" value="${deadlineValue}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                            </div>
+                            <p id="assignment-error" class="text-sm text-red-600"></p>
+                            <div class="pt-4 flex justify-end space-x-3">
+                                <button type="button" id="cancel-assignment-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button>
+                                <button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">${isEditing ? 'Simpan Perubahan' : 'Buat Tugas'}</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             `;
         }
+
+        function renderTeacherAssignmentDetail() {
+            const { assignment, submissions } = state.currentViewData;
+            if (!assignment || !submissions) return '';
+
+            const createSubmissionRow = (submission) => {
+                return `
+                    <tr class="hover:bg-pink-50/50">
+                        <td class="p-4">${submission.profiles?.name || 'Nama Siswa'}</td>
+                        <td class="p-4">${formatDate(submission.submitted_at)}</td>
+                        <td class="p-4"><a href="${submission.file_url}" target="_blank" class="text-brand hover:underline">Lihat File <i class="fas fa-external-link-alt text-xs"></i></a></td>
+                        <td class="p-4">
+                            <input type="number" value="${submission.grade || ''}" min="0" max="100" class="grade-input w-20 rounded-md border-gray-300 shadow-sm text-center" data-submission-id="${submission.id}">
+                        </td>
+                        <td class="p-4">
+                            <button class="save-grade-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-full" data-submission-id="${submission.id}">Simpan</button>
+                        </td>
+                    </tr>
+                `;
+            };
+
+            return `
+                <main class="container mx-auto p-6">
+                    <div class="mb-6">
+                        <button data-page="teacherDashboard" class="text-brand hover:underline font-semibold"><i class="fas fa-arrow-left mr-2"></i> Kembali ke Dashboard Tugas</button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-8">
+                        <p class="text-sm font-medium text-brand">${assignment.courses?.name || 'Mata Pelajaran'}</p>
+                        <h1 class="text-4xl font-bold mt-1 text-gray-800">${assignment.title}</h1>
+                        <p class="text-gray-500 mt-3">Deadline: <span class="font-semibold">${formatDate(assignment.deadline)}</span></p>
+                        
+                        <hr class="my-8">
+
+                        <h2 class="text-2xl font-bold text-gray-800">Daftar Pengumpulan</h2>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Kumpul</th>
+                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
+                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nilai</th>
+                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    ${submissions.length > 0 ? submissions.map(createSubmissionRow).join('') : '<tr><td colspan="5" class="p-4 text-center text-gray-500">Belum ada siswa yang mengumpulkan.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+
+        function renderAdminDashboard() { return `<div>Halaman Admin sedang dalam pengembangan.</div>`; }
+        function renderProfilePage() { return `<div>Halaman Profil sedang dalam pengembangan.</div>`; }
         
         function attachEventListeners() {
-            appContainer.addEventListener('input', (e) => {
-                if(e.target.id === 'search-assignments' || e.target.id === 'search-users') {
-                    render();
-                }
-            });
+            if(!appContainer) return;
 
-            appContainer.addEventListener('change', (e) => {
-                if (e.target.id === 'role-select') {
-                    const studentFields = document.getElementById('student-fields');
-                    if (e.target.value === 'student') {
-                        studentFields.style.display = 'block';
-                        studentFields.querySelectorAll('input').forEach(input => input.required = true);
-                    } else {
-                        studentFields.style.display = 'none';
-                        studentFields.querySelectorAll('input').forEach(input => input.required = false);
-                    }
-                }
-            });
-            
-            appContainer.addEventListener('click', (e) => {
+            // Delegated click listener
+            appContainer.addEventListener('click', async (e) => {
                 const target = e.target;
+                
+                // Page navigation
                 const pageLink = target.closest('[data-page]');
                 if (pageLink) {
                     e.preventDefault();
                     navigate(pageLink.dataset.page);
-                    return;
                 }
 
+                // Logout
+                if (target.closest('#logout-btn')) {
+                    e.preventDefault();
+                    await api.logout();
+                }
+
+                // Profile menu toggle
                 if (target.closest('#profile-menu-btn')) {
                     document.getElementById('profile-menu')?.classList.toggle('hidden');
-                    return;
-                }
-                if (!target.closest('#profile-menu-btn')) {
-                    document.getElementById('profile-menu')?.classList.add('hidden');
-                }
-                if (target.closest('#logout-btn')) {
-                    state.currentUser = null;
-                    navigate('login');
-                    return;
                 }
 
-                if (target.closest('#close-password-modal-btn, #cancel-password-btn')) {
-                    document.getElementById('password-modal').classList.remove('flex'); return;
+                // Student: View assignment detail
+                const studentTaskCard = target.closest('.task-card[data-assignment-id]');
+                if (studentTaskCard && state.currentPage === 'studentDashboard') {
+                    e.preventDefault();
+                    state.currentAssignmentId = parseInt(studentTaskCard.dataset.assignmentId);
+                    navigate('studentAssignmentDetail');
                 }
-                if (target.closest('#show-password-modal-btn')) {
-                    document.getElementById('password-modal').classList.add('flex'); return;
+
+                // Student: Resubmit button
+                if (target.id === 'resubmit-btn') {
+                    const submissionSection = document.getElementById('submission-section');
+                    const renderSubmissionForm = (isUpdate = false) => {
+                         return `<div class="mt-6 bg-pink-50 border-l-4 border-pink-400 p-4 rounded-r-lg"><h3 class="text-lg font-semibold text-gray-800">Kirim Ulang Tugas Anda</h3><form id="submission-form" class="mt-4 space-y-4"><div><label for="submission-file" class="block text-sm font-medium text-gray-700">Pilih File Baru</label><input type="file" id="submission-file" name="submissionFile" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-brand hover:file:bg-pink-200 cursor-pointer"></div><div><label for="submission-notes" class="block text-sm font-medium text-gray-700">Catatan (Opsional)</label><textarea id="submission-notes" name="submissionNotes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand" placeholder="Tambahkan catatan untuk guru Anda..."></textarea></div><button type="submit" class="w-full sm:w-auto inline-flex justify-center py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark"><i class="fas fa-upload mr-2"></i> Kirim Ulang</button></form></div>`;
+                    }
+                    submissionSection.innerHTML = renderSubmissionForm(true);
                 }
-                if (target.closest('.task-card')) {
-                    state.currentAssignmentId = parseInt(target.closest('.task-card').dataset.assignmentId);
-                    const page = state.currentUser.role === 'student' ? 'studentAssignmentDetail' : 'teacherAssignmentDetail';
-                    navigate(page);
-                    return;
+
+                // Teacher: View assignment detail
+                 const teacherTaskCard = target.closest('.task-card[data-assignment-id]');
+                 if (teacherTaskCard && state.currentPage === 'teacherDashboard' && !target.closest('button')) {
+                    state.currentAssignmentId = parseInt(teacherTaskCard.dataset.assignmentId);
+                    navigate('teacherAssignmentDetail');
+                 }
+
+                // Teacher: Add/Edit/Delete assignment buttons
+                if (target.id === 'add-assignment-btn') {
+                    document.getElementById('assignment-modal')?.classList.add('flex');
                 }
-                if (target.closest('#create-assignment-btn, #create-assignment-btn-main')) {
-                    const modal = document.getElementById('assignment-modal');
-                    const form = modal.querySelector('form');
-                    form.reset();
-                    form.id.value = '';
-                    modal.querySelector('#assignment-modal-title').textContent = 'Buat Tugas Baru';
-                    modal.querySelector('#assignment-submit-btn').textContent = 'Simpan Tugas';
+                if (target.id === 'close-assignment-modal-btn' || target.id === 'cancel-assignment-btn') {
+                    document.getElementById('assignment-modal')?.classList.remove('flex');
+                }
+                const editBtn = target.closest('.edit-assignment-btn');
+                if (editBtn) {
+                    showToast("Fungsi edit sedang dikembangkan.", "info");
+                }
+                const deleteBtn = target.closest('.delete-assignment-btn');
+                if (deleteBtn) {
+                    state.itemToDelete = { type: 'assignment', id: deleteBtn.dataset.assignmentId };
+                    const modal = document.getElementById('confirmation-modal');
+                    modal.querySelector('#confirm-title').textContent = 'Hapus Tugas';
+                    modal.querySelector('#confirm-message').textContent = 'Apakah Anda yakin ingin menghapus tugas ini? Semua data pengumpulan terkait akan ikut terhapus.';
                     modal.classList.add('flex');
-                    return;
-                }
-                if (target.closest('.edit-assignment-btn')) {
-                    const assignmentId = parseInt(target.closest('.edit-assignment-btn').dataset.assignmentId);
-                    const assignment = db.assignments.find(a => a.id === assignmentId);
-                    const modal = document.getElementById('assignment-modal');
-                    const form = modal.querySelector('form');
-                    form.id.value = assignment.id;
-                    form.title.value = assignment.title;
-                    form.courseId.value = assignment.courseId;
-                    form.deadline.value = new Date(assignment.deadline).toISOString().slice(0, 16);
-                    form.description.value = assignment.description;
-                    modal.querySelector('#assignment-modal-title').textContent = 'Edit Tugas';
-                    modal.querySelector('#assignment-submit-btn').textContent = 'Simpan Perubahan';
-                    modal.classList.add('flex');
-                    return;
-                }
-                if (target.closest('#cancel-modal-btn')) {
-                    document.getElementById('assignment-modal').classList.remove('flex'); return;
-                }
-                if (target.closest('.grade-btn')) {
-                    state.currentSubmissionId = parseInt(target.closest('.grade-btn').dataset.submissionId);
-                    const submission = db.submissions.find(s => s.id === state.currentSubmissionId);
-                    document.getElementById('grade-input').value = submission?.grade || '';
-                    document.getElementById('feedback-input').value = submission?.feedback || '';
-                    document.getElementById('grading-modal').classList.add('flex');
-                    return;
-                }
-                if (target.closest('#cancel-grading-btn')) {
-                    document.getElementById('grading-modal').classList.remove('flex'); return;
-                }
-                if (target.closest('.admin-tab')) {
-                    state.adminCurrentTab = target.closest('.admin-tab').dataset.tab;
-                    navigate('adminDashboard');
-                    return;
-                }
-                if (target.closest('.profile-tab')) {
-                    state.profileCurrentTab = target.closest('.profile-tab').dataset.tab;
-                    render();
-                    return;
                 }
                 
-                const confirmationModal = document.getElementById('confirmation-modal');
-                const deleteAssignmentBtn = target.closest('.delete-assignment-btn');
-                if (deleteAssignmentBtn) {
-                    state.itemToDelete = { type: 'assignment', id: parseInt(deleteAssignmentBtn.dataset.assignmentId) };
-                    document.getElementById('confirm-title').innerText = 'Hapus Tugas?';
-                    document.getElementById('confirm-message').innerText = 'Apakah Anda yakin ingin menghapus tugas ini? Semua data pengumpulan siswa yang terkait akan dihapus permanen.';
-                    confirmationModal.classList.add('flex');
-                    return;
-                }
-                const unsendBtn = target.closest('.unsend-submission-btn');
-                if (unsendBtn) {
-                    state.itemToDelete = { type: 'submission', id: parseInt(unsendBtn.dataset.submissionId) };
-                    document.getElementById('confirm-title').innerText = 'Batalkan Pengiriman?';
-                    document.getElementById('confirm-message').innerText = 'Tindakan ini akan menghapus file yang telah Anda kirim. Anda dapat mengumpulkannya kembali selama waktu masih tersedia.';
-                    confirmationModal.classList.add('flex');
-                    return;
-                }
-                const deleteUserBtn = target.closest('.delete-user-btn');
-                if (deleteUserBtn) {
-                    const userId = parseInt(deleteUserBtn.dataset.userId);
-                    if (state.currentUser.id === userId) { showToast('Anda tidak dapat menghapus akun Anda sendiri.', 'error'); return; }
-                    state.itemToDelete = { type: 'user', id: userId };
-                    document.getElementById('confirm-title').innerText = 'Hapus Pengguna?';
-                    document.getElementById('confirm-message').innerText = 'Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat diurungkan.';
-                    confirmationModal.classList.add('flex');
-                    return;
-                }
-                const editUserBtn = target.closest('.edit-user-btn');
-                if (editUserBtn) {
-                    const userId = parseInt(editUserBtn.dataset.userId);
-                    const user = db.users.find(u => u.id === userId);
-                    if (user) {
-                        const modal = document.getElementById('edit-user-modal');
-                        modal.querySelector('#edit-user-id').value = user.id;
-                        modal.querySelector('#edit-user-name').value = user.name;
-                        modal.querySelector('#edit-user-email').value = user.email;
-                        modal.querySelector('#edit-user-role').value = user.role;
-                        modal.querySelector('#edit-user-password').value = '';
-                        
-                        const studentFields = modal.querySelector('#edit-student-fields');
-                        if (user.role === 'student') {
-                            studentFields.classList.remove('hidden');
-                            modal.querySelector('#edit-user-username').value = user.username || '';
-                            modal.querySelector('#edit-user-kelas').value = user.kelas || '';
-                        } else {
-                            studentFields.classList.add('hidden');
-                        }
-                        
-                        modal.classList.add('flex');
+                // Teacher: Save Grade
+                const saveGradeBtn = target.closest('.save-grade-btn');
+                if (saveGradeBtn) {
+                    e.preventDefault();
+                    const submissionId = saveGradeBtn.dataset.submissionId;
+                    const gradeInput = document.querySelector(`.grade-input[data-submission-id="${submissionId}"]`);
+                    const newGrade = gradeInput.value;
+                    try {
+                        setLoading(saveGradeBtn, true);
+                        await api.updateSubmission(submissionId, { grade: newGrade });
+                        showToast("Nilai berhasil disimpan.");
+                    } catch(error) {
+                        showToast(error.message, "error");
+                    } finally {
+                        setLoading(saveGradeBtn, false);
                     }
-                    return;
                 }
 
-                if (target.closest('#cancel-edit-user-btn')) { document.getElementById('edit-user-modal').classList.remove('flex'); return; }
-                if (target.closest('#cancel-delete-btn')) { confirmationModal.classList.remove('flex'); state.itemToDelete = { type: null, id: null }; return; }
-                if (target.closest('#confirm-delete-btn')) {
-                    const { type, id } = state.itemToDelete;
-                    const button = target.closest('#confirm-delete-btn');
-                    setLoading(button, true);
-                    let action, message = '';
-                    if (type === 'assignment') { action = api.deleteAssignment(id).then(() => { message = 'Tugas berhasil dihapus.'; navigate('teacherDashboard'); }); } 
-                    else if (type === 'submission') { action = api.deleteSubmission(id).then(() => { message = 'Pengiriman dibatalkan.'; navigate('studentAssignmentDetail'); }); } 
-                    else if (type === 'user') { action = api.deleteUser(id).then(() => { message = 'Pengguna berhasil dihapus.'; navigate('adminDashboard'); }); }
-                    
-                    action.finally(() => {
-                        confirmationModal.classList.remove('flex');
-                        state.itemToDelete = { type: null, id: null };
-                        showToast(message);
-                        setLoading(button, false);
-                    });
+                // Confirmation Modal cancel
+                if (target.id === 'cancel-delete-btn') {
+                    document.getElementById('confirmation-modal').classList.remove('flex');
                 }
             });
 
-            // --- Form Submissions ---
+            // Delegated form submission listener
             appContainer.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = e.target;
                 const submitButton = form.querySelector('button[type="submit"]');
                 setLoading(submitButton, true);
+                const errorEl = form.querySelector('[id$="-error"]');
+                if(errorEl) errorEl.textContent = '';
 
                 try {
                     switch (form.id) {
-                        case 'login-form': {
-                            const user = await api.login(form.identifier.value, form.password.value);
-                            if (user) {
-                                state.currentUser = user;
-                                navigate(user.role === 'student' ? 'studentDashboard' : (user.role === 'teacher' ? 'teacherDashboard' : 'adminDashboard'));
-                            } else {
-                                form.querySelector('#login-error').textContent = "Username/Email atau password salah.";
-                            }
+                        case 'login-form':
+                            await api.login(form.identifier.value, form.password.value);
                             break;
-                        }
-                        case 'register-form': {
+                        case 'register-form':
                             const role = form.role.value;
-                            const data = { name: form.name.value, email: form.email.value, password: form.password.value, role };
+                            const userData = { name: form.name.value, email: form.email.value, password: form.password.value, role };
                             if (role === 'student') {
-                                data.username = form.username.value;
-                                data.kelas = form.kelas.value;
+                                userData.username = form.username.value;
+                                userData.kelas = form.kelas.value;
                             }
-                            const result = await api.register(data);
-                            if (result.error) {
-                                form.querySelector('#register-error').textContent = result.error;
+                            await api.register(userData);
+                            break;
+                        case 'submission-form':
+                            const file = form.submissionFile.files[0];
+                            if (!file) {
+                                showToast("Anda harus memilih file.", "error");
+                                setLoading(submitButton, false);
+                                return;
+                            }
+                            const filePath = `submissions/${state.currentUser.id}/${state.currentAssignmentId}/${Date.now()}_${file.name}`;
+                            const fileUrl = await api.uploadFile(file, filePath);
+                            const submissionData = {
+                                assignment_id: state.currentAssignmentId,
+                                student_id: state.currentUser.id,
+                                file_url: fileUrl,
+                                notes: form.submissionNotes.value,
+                                submitted_at: new Date().toISOString(),
+                            };
+                            if (state.currentViewData.submission) {
+                                await api.updateSubmission(state.currentViewData.submission.id, submissionData);
+                                showToast("Tugas berhasil dikirim ulang!");
                             } else {
-                                state.currentUser = result;
-                                navigate(result.role === 'student' ? 'studentDashboard' : 'teacherDashboard');
+                                await api.createSubmission(submissionData);
+                                showToast("Tugas berhasil dikumpulkan!");
                             }
+                            navigate('studentAssignmentDetail');
                             break;
-                        }
-                        case 'edit-profile-form': {
-                            const data = { 
-                                name: form.querySelector('#profile-name').value, 
-                                email: form.querySelector('#profile-email').value, 
-                                bio: form.querySelector('#profile-bio').value,
-                                username: form.querySelector('#profile-username')?.value
+                        case 'assignment-form':
+                            const assignmentId = form.assignmentId.value;
+                            const assignmentData = {
+                                title: form.title.value,
+                                description: form.description.value,
+                                deadline: new Date(form.deadline.value).toISOString(),
+                                course_id: parseInt(form.courseId.value),
+                                teacher_id: state.currentUser.id,
                             };
-                            const updatedUser = await api.updateUser(state.currentUser.id, data);
-                            state.currentUser = updatedUser;
-                            showToast('Profil berhasil diperbarui.');
-                            render();
-                            break;
-                        }
-                        case 'edit-user-form': {
-                            const userId = parseInt(form.querySelector('#edit-user-id').value);
-                            const data = { 
-                                name: form.querySelector('#edit-user-name').value, 
-                                role: form.querySelector('#edit-user-role').value, 
-                                password: form.querySelector('#edit-user-password').value,
-                                username: form.querySelector('#edit-user-username').value,
-                                kelas: form.querySelector('#edit-user-kelas').value
-                            };
-                            await api.updateUser(userId, data);
-                            showToast('Data pengguna berhasil diperbarui.');
-                            form.closest('.modal').classList.remove('flex');
-                            navigate('adminDashboard');
-                            break;
-                        }
-                        case 'assignment-form': {
-                            const assignmentId = parseInt(form.id.value);
-                            const data = { title: form.title.value, courseId: parseInt(form.courseId.value), deadline: new Date(form.deadline.value).toISOString(), description: form.description.value, fileUrl: '#' };
                             if (assignmentId) {
-                                await api.updateAssignment(assignmentId, data);
-                                showToast('Tugas berhasil diperbarui.');
+                                await api.updateAssignment(assignmentId, assignmentData);
+                                showToast("Tugas berhasil diperbarui.");
                             } else {
-                                await api.createAssignment(data);
-                                showToast('Tugas baru berhasil dibuat.');
+                                await api.createAssignment(assignmentData);
+                                showToast("Tugas baru berhasil dibuat.");
                             }
-                            form.closest('.modal').classList.remove('flex');
+                            document.getElementById('assignment-modal')?.classList.remove('flex');
                             navigate('teacherDashboard');
                             break;
-                        }
-                        case 'change-password-form': {
-                            const errorEl = form.querySelector('#password-error');
-                            errorEl.textContent = '';
-                            if (form.newPassword.value !== form.confirmPassword.value) {
-                                errorEl.textContent = 'Konfirmasi password baru tidak cocok.';
-                            } else {
-                                // Real implementation would verify old password here
-                                showToast('Password berhasil diubah.');
-                                form.closest('.modal').classList.remove('flex');
-                            }
-                            break;
-                        }
-                        default:
-                            showToast('Data berhasil disimpan (simulasi).');
-                            const openModal = form.closest('.modal');
-                            if (openModal) openModal.classList.remove('flex');
-                            break;
                     }
-                } catch (err) {
-                    showToast('Terjadi kesalahan.', 'error');
+                } catch (error) {
+                    if(errorEl) errorEl.textContent = error.message;
+                    showToast(error.message, 'error');
                 } finally {
                     setLoading(submitButton, false);
                 }
             });
 
-            // --- File Inputs ---
-            const profilePictureUpload = document.getElementById('profile-picture-upload');
-            if (profilePictureUpload) profilePictureUpload.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = async function(event) {
-                        const updatedUser = await api.updateUser(state.currentUser.id, { profilePicture: event.target.result });
-                        state.currentUser = updatedUser;
-                        showToast('Foto profil berhasil diubah.');
-                        render();
+            // Listener for role change on register form
+            const roleSelect = document.getElementById('role-select');
+            if (roleSelect) {
+                roleSelect.addEventListener('change', () => {
+                    document.getElementById('student-fields').style.display = roleSelect.value === 'student' ? 'block' : 'none';
+                });
+            }
+
+            // Listener for confirm delete button (separate to avoid re-adding)
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.onclick = async () => {
+                    const { type, id } = state.itemToDelete;
+                     setLoading(confirmDeleteBtn, true);
+                    try {
+                        if (type === 'assignment') {
+                            await api.deleteAssignment(id);
+                            showToast("Tugas berhasil dihapus.");
+                            navigate('teacherDashboard');
+                        }
+                    } catch (error) {
+                        showToast(error.message, 'error');
+                    } finally {
+                         setLoading(confirmDeleteBtn, false);
+                        document.getElementById('confirmation-modal')?.classList.remove('flex');
+                        state.itemToDelete = { type: null, id: null };
                     }
-                    reader.readAsDataURL(file);
+                };
+            }
+        }
+        
+        function initializeApp() {
+            db.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
+                    if (!state.currentUser || state.currentUser.id !== session.user.id) {
+                        try {
+                            const userProfile = await api.getProfile(session.user.id);
+                            state.currentUser = userProfile;
+                            const dashboardPage = userProfile.role === 'student' ? 'studentDashboard' : (userProfile.role === 'teacher' ? 'teacherDashboard' : 'adminDashboard');
+                            navigate(dashboardPage);
+                        } catch (error) {
+                            showToast("Gagal mengambil data profil.", "error");
+                            await api.logout();
+                        }
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    state.currentUser = null;
+                    navigate('login');
                 }
             });
         }
-        
-        // Initial load
-        navigate('login');
+
     </script>
 </body>
 </html>
