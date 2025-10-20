@@ -55,12 +55,6 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-        .prose {
-             line-height: 1.75;
-        }
-        .prose p { margin-bottom: 1em; }
-        .prose ul, .prose ol { margin-left: 1.5em; margin-bottom: 1em; }
-        .prose li { margin-bottom: 0.5em; }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -77,13 +71,14 @@
         // ===================================================================================
         const { createClient } = supabase;
 
-        // !!! PENTING: Ganti dengan kredensial Supabase Anda !!!
+        // PENTING: GANTI DENGAN URL DAN KUNCI DARI PROYEK SUPABASE ANDA
         const SUPABASE_URL = 'https://blgaczkrdmkibjqdvvxo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZ2FjemtyZG1raWJqcWR2dnhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjIxNTksImV4cCI6MjA3NTg5ODE1OX0.FnzI9WmpgiXVkeSR-cRznvf3QDG21Iu0gSpJn_Izc7Q';
 
         let db;
         const appContainer = document.getElementById('app');
 
+        // Periksa apakah kredensial Supabase sudah diatur
         if (SUPABASE_URL.startsWith('GANTI_DENGAN')) {
             appContainer.innerHTML = `
                 <div class="flex items-center justify-center min-h-screen bg-gray-100">
@@ -91,9 +86,9 @@
                         <div class="text-center">
                             <h1 class="text-3xl font-bold text-red-600"><i class="fas fa-exclamation-triangle"></i> Konfigurasi Diperlukan</h1>
                             <p class="mt-4 text-gray-700">
-                                Aplikasi ini belum terhubung ke Supabase. Silakan buka file <code>gradeup_app.html</code>, cari bagian <strong>SUPABASE SETUP</strong>, dan ganti nilai placeholder <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> dengan kredensial dari proyek Supabase Anda.
+                                Aplikasi ini belum terhubung ke Supabase. Silakan buka file ini, cari bagian <strong>SUPABASE SETUP</strong>, dan ganti nilai placeholder <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> dengan kredensial dari proyek Supabase Anda.
                             </p>
-                            <p class="mt-2 text-sm text-gray-500">
+                             <p class="mt-2 text-sm text-gray-500">
                                 Setelah Anda mengganti kredensial, segarkan halaman ini.
                             </p>
                         </div>
@@ -106,23 +101,63 @@
         }
 
         // ===================================================================================
-        // SUPABASE API HELPER FUNCTIONS
+        // STATE MANAGEMENT
+        // ===================================================================================
+        const state = {
+            currentUser: null,
+            currentPage: 'login',
+            currentViewData: {},
+            currentAssignmentId: null,
+            currentSubmissionId: null,
+            adminCurrentTab: 'users',
+            profileCurrentTab: 'info',
+            itemToDelete: { type: null, id: null },
+            isLoading: false,
+        };
+
+        // ===================================================================================
+        // API HELPER FUNCTIONS
         // ===================================================================================
         const api = {
-            // AUTH
             async login(identifier, password) {
                 let email = identifier;
+                
+                // Step 1: If the identifier is not an email, try to find the corresponding email from the username
                 if (!identifier.includes('@')) {
-                    const { data: profile, error: profileError } = await db.from('profiles').select('email').eq('username', identifier).single();
-                    if (profileError || !profile) {
-                        throw new Error("Username yang Anda masukkan tidak terdaftar.");
+                    const { data: profiles, error: profileError } = await db.from('profiles')
+                        .select('email')
+                        .eq('username', identifier);
+                    
+                    // Handle potential errors during the profile lookup
+                    if (profileError) {
+                        console.error("Supabase profile query error:", profileError);
+                        // This error could be due to RLS policies.
+                        throw new Error("Gagal mencari profil. Periksa koneksi atau kebijakan keamanan database.");
                     }
-                    email = profile.email;
+                    
+                    // If no profile is found for the given username, throw a generic error to prevent username enumeration
+                    if (!profiles || profiles.length === 0) {
+                        throw new Error("Username atau password salah.");
+                    }
+                    
+                    email = profiles[0].email;
                 }
+                
+                // Step 2: Attempt to sign in with the resolved email and the provided password
                 const { data, error } = await db.auth.signInWithPassword({ email, password });
+                
+                // Handle authentication errors
                 if (error) {
-                    throw new Error("Email atau password yang Anda masukkan salah. Silakan coba lagi.");
+                    // Supabase throws a generic error for wrong password or non-existent email.
+                    // We map it to a single, user-friendly message for security.
+                    if (error.message.includes("Invalid login credentials")) {
+                         throw new Error("Username atau password salah.");
+                    }
+                    // For other unexpected errors, throw the original message.
+                    throw error;
                 }
+                
+                // Step 3: If successful, return the user object
                 return data.user;
             },
             async register(userData) {
@@ -151,8 +186,6 @@
                 if (error) throw error;
                 return data;
             },
-            
-            // PROFILES
             async getProfile(userId) {
                 const { data, error } = await db.from('profiles').select('*').eq('id', userId).single();
                 if (error) throw error;
@@ -169,13 +202,13 @@
                 return data;
             },
             async deleteUser(userId) {
-                console.warn("Fungsi deleteUser memerlukan RPC function di Supabase untuk keamanan.");
-                // Contoh pemanggilan jika sudah dibuat:
-                // const { error } = await db.rpc('delete_user_by_id', { user_id: userId });
-                // if (error) throw error;
+                // PENTING: Untuk keamanan, operasi ini idealnya memanggil fungsi Supabase Edge
+                // yang memverifikasi bahwa pengguna yang meminta adalah admin.
+                // Kode ini adalah simplifikasi.
+                console.warn("deleteUser function requires a Supabase Edge Function (RPC) for security.");
+                const { error } = await db.from('profiles').delete().eq('id', userId);
+                if (error) throw error;
             },
-            
-            // DATA FETCHING
             async getCoursesForTeacher(teacherId) {
                 const { data, error } = await db.from('courses').select('*').eq('teacher_id', teacherId);
                 if (error) throw error;
@@ -215,7 +248,7 @@
                 if (error) throw error;
                 return data;
             },
-            async getSubmissionsForAssignment(assignmentId) {
+             async getSubmissionsForAssignment(assignmentId) {
                 const { data, error } = await db.from('submissions').select('*, profiles(id, name)').eq('assignment_id', assignmentId);
                 if (error) throw error;
                 return data;
@@ -234,71 +267,26 @@
                 const { error } = await db.from('submissions').delete().eq('id', submissionId);
                 if (error) throw error;
             },
-            
-            // FILE UPLOAD
             async uploadFile(file, path) {
-                const { data, error } = await db.storage.from('gradeup_files').upload(path, file, {
-                    cacheControl: '3600',
-                    upsert: true
-                });
+                const { data, error } = await db.storage.from('gradeup_files').upload(path, file, { cacheControl: '3600', upsert: true });
                 if (error) throw error;
                 const { data: publicUrlData } = db.storage.from('gradeup_files').getPublicUrl(data.path);
                 return publicUrlData.publicUrl;
             }
         };
         
-        const state = {
-            currentUser: null, currentPage: 'login', currentViewData: {},
-            currentAssignmentId: null, currentSubmissionId: null, adminCurrentTab: 'users',
-            profileCurrentTab: 'info',
-            itemToDelete: { type: null, id: null },
-            isLoading: false,
-        };
+        // ===================================================================================
+        // HELPER FUNCTIONS
+        // ===================================================================================
+        function formatDate(dateString) { if (!dateString) return 'N/A'; const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }; return new Date(dateString).toLocaleDateString('id-ID', options); }
+        function getStatus(assignment, submission) { const now = new Date(); const deadline = new Date(assignment.deadline); if (submission) return { text: `Dikumpulkan`, color: 'green', grade: submission.grade }; if (now > deadline) return { text: 'Terlambat', color: 'red', grade: null }; return { text: 'Belum Dikerjakan', color: 'yellow', grade: null }; }
+        function showToast(message, type = 'success') { const container = document.getElementById('toast-container'); if (!container) return; const toast = document.createElement('div'); const colors = { success: 'bg-green-500', error: 'bg-red-500' }; toast.className = `px-6 py-3 rounded-full text-white shadow-lg fade-in ${colors[type] || 'bg-gray-800'}`; toast.textContent = message; container.appendChild(toast); setTimeout(() => { toast.style.transition = 'opacity 0.5s ease'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000); }
+        const setLoading = (button, loading) => { if (button) { if (loading) { button.disabled = true; button.dataset.originalHtml = button.innerHTML; button.innerHTML = `<i class="fas fa-spinner spinner mr-2"></i> Memproses...`; } else { button.disabled = false; if(button.dataset.originalHtml) button.innerHTML = button.dataset.originalHtml; } } };
 
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(dateString).toLocaleDateString('id-ID', options);
-        }
-
-        function getStatus(assignment, submission) {
-            const now = new Date();
-            const deadline = new Date(assignment.deadline);
-            if (submission) return { text: `Dikumpulkan`, color: 'green', grade: submission.grade };
-            if (now > deadline) return { text: 'Terlambat', color: 'red', grade: null };
-            return { text: 'Belum Dikerjakan', color: 'yellow', grade: null };
-        }
-        
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            const toast = document.createElement('div');
-            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
-            toast.className = `px-6 py-3 rounded-full text-white shadow-lg fade-in`;
-            toast.classList.add(colors[type] || 'bg-gray-800');
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.transition = 'opacity 0.5s ease';
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-        const setLoading = (button, loading) => {
-            if (button) {
-                if (loading) {
-                    button.disabled = true;
-                    button.dataset.originalHtml = button.innerHTML;
-                    button.innerHTML = `<i class="fas fa-spinner spinner mr-2"></i> Memproses...`;
-                } else {
-                    button.disabled = false;
-                    if(button.dataset.originalHtml) button.innerHTML = button.dataset.originalHtml;
-                }
-            }
-        };
-
-        async function navigate(page, data = {}) {
+        // ===================================================================================
+        // NAVIGATION
+        // ===================================================================================
+        async function navigate(page) {
             state.currentPage = page;
             state.currentViewData = {};
             state.isLoading = true;
@@ -307,39 +295,28 @@
             try {
                 switch (page) {
                     case 'studentDashboard': {
-                        const [assignments, submissions] = await Promise.all([
-                            api.getAssignmentsForStudent(),
-                            api.getSubmissionsForStudent(state.currentUser.id)
-                        ]);
+                        const [assignments, submissions] = await Promise.all([ api.getAssignmentsForStudent(), api.getSubmissionsForStudent(state.currentUser.id) ]);
                         state.currentViewData = { assignments, submissions };
                         break;
                     }
                     case 'studentAssignmentDetail': {
-                        const [assignment, submissions] = await Promise.all([
-                            api.getAssignment(state.currentAssignmentId),
-                            api.getSubmissionsForStudent(state.currentUser.id)
-                        ]);
+                        const [assignment, submissions] = await Promise.all([ api.getAssignment(state.currentAssignmentId), api.getSubmissionsForStudent(state.currentUser.id) ]);
                         state.currentViewData = { assignment, submission: submissions.find(s => s.assignment_id === state.currentAssignmentId) };
                         break;
                     }
                     case 'teacherDashboard': {
-                        state.currentViewData.assignments = await api.getAssignmentsForTeacher(state.currentUser.id);
+                        const [assignments, courses] = await Promise.all([ api.getAssignmentsForTeacher(state.currentUser.id), api.getCoursesForTeacher(state.currentUser.id) ]);
+                        state.currentViewData = { assignments, courses };
                         break;
                     }
                     case 'teacherAssignmentDetail': {
-                         const [assignment, submissions] = await Promise.all([
-                            api.getAssignment(state.currentAssignmentId),
-                            api.getSubmissionsForAssignment(state.currentAssignmentId)
-                        ]);
+                         const [assignment, submissions] = await Promise.all([ api.getAssignment(state.currentAssignmentId), api.getSubmissionsForAssignment(state.currentAssignmentId) ]);
                         state.currentViewData = { assignment, submissions };
                         break;
                     }
                     case 'adminDashboard': {
-                         if(state.adminCurrentTab === 'users') {
-                             state.currentViewData.users = await api.getAllUsers();
-                         } else {
-                             state.currentViewData.stats = { totalUsers: 'N/A', totalAssignments: 'N/A', totalSubmissions: 'N/A', participationRate: 'N/A' };
-                         }
+                         if(state.adminCurrentTab === 'users') { state.currentViewData.users = await api.getAllUsers(); } 
+                         else { state.currentViewData.stats = { totalUsers: 'N/A', totalAssignments: 'N/A', totalSubmissions: 'N/A', participationRate: 'N/A' }; }
                         break;
                     }
                 }
@@ -352,6 +329,9 @@
             render();
         }
 
+        // ===================================================================================
+        // RENDER FUNCTIONS
+        // ===================================================================================
         function render() {
             if(!appContainer) return;
             appContainer.innerHTML = '';
@@ -373,501 +353,653 @@
                     default: content += renderLogin();
                 }
             }
-
             if (state.currentUser) {
-                content += renderChangePasswordModal();
+                 content += renderChangePasswordModal();
+                 if(state.currentUser.role === 'teacher') content += renderCreateAssignmentModal();
+                 if(state.currentPage === 'teacherAssignmentDetail') content += renderGradingModal();
             }
+            if(state.currentUser && state.currentUser.role === 'admin') content += renderEditUserModal();
             content += renderConfirmationModal();
             appContainer.innerHTML = content;
             attachEventListeners();
         }
         
         function renderHeader() {
+            if (!state.currentUser) return '';
             const { name, role, profile_picture } = state.currentUser;
             const roleDisplay = { student: 'Siswa', teacher: 'Guru', admin: 'Administrator' };
             const dashboardPage = role === 'student' ? 'studentDashboard' : (role === 'teacher' ? 'teacherDashboard' : 'adminDashboard');
             return `<header class="header-bg shadow-md sticky top-0 z-50"><nav class="container mx-auto px-6 py-3 flex justify-between items-center"><a href="#" class="text-2xl font-bold text-brand" data-page="${dashboardPage}"><i class="fas fa-leaf"></i> GradeUp</a><div class="relative"><button id="profile-menu-btn" class="flex items-center space-x-3 p-2 rounded-full hover:bg-pink-200/50"><img src="${profile_picture}" alt="Foto Profil" class="w-10 h-10 rounded-full object-cover"><div class="text-right hidden sm:block"><p class="font-semibold">${name}</p><p class="text-sm text-gray-500">${roleDisplay[role]}</p></div></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">${role !== 'admin' ? `<a href="#" data-page="profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50"><i class="fas fa-user-edit w-6"></i> Profil Saya</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50"><i class="fas fa-sign-out-alt w-6"></i> Logout</a></div></div></nav></header>`;
         }
         
-        function renderConfirmationModal() {
-            return `<div id="confirmation-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><h2 id="confirm-title" class="text-2xl font-bold text-gray-800"></h2><p id="confirm-message" class="mt-4 text-gray-600"></p><div class="mt-8 flex justify-end space-x-3"><button id="cancel-delete-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Tidak, Batal</button><button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Ya, Lanjutkan</button></div></div></div>`;
-        }
-
-        function renderChangePasswordModal() {
-            return `<div id="password-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Ganti Password</h2><button id="close-password-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button></div><form id="change-password-form" class="mt-6 space-y-4"><div><label class="block text-sm font-medium text-gray-700">Password Baru</label><input type="password" name="newPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><p id="password-error" class="text-sm text-red-600"></p><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-password-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Perubahan</button></div></form></div></div>`;
-        }
-
-        function renderLogin() {
-            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><div class="text-center"><h1 class="text-4xl font-bold text-brand"><i class="fas fa-leaf"></i> GradeUp</h1><p class="mt-2 text-gray-600">Selamat datang! Silakan login ke akun Anda.</p></div><form id="login-form" class="space-y-6"><div><label for="identifier" class="text-sm font-medium text-gray-700">Username atau Email</label><input id="identifier" name="identifier" type="text" autocomplete="username" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="Masukkan username atau email"></div><div><label for="password" class="text-sm font-medium text-gray-700">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="********"></div><p id="login-error" class="text-sm text-red-600"></p><button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark">Login</button></form><p class="text-sm text-center text-gray-600">Belum punya akun? <a href="#" data-page="register" class="font-medium text-brand hover:underline">Registrasi Mandiri di sini</a></p></div></div>`;
-        }
-
-        function renderRegister() {
-            return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><h2 class="text-3xl font-bold text-center text-brand">Registrasi Mandiri</h2><form id="register-form" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Nama Lengkap</label><input name="name" type="text" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Nama Lengkap Sesuai Absen"></div><div><label class="text-sm font-medium text-gray-700">Email</label><input name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="contoh@sekolah.id"></div><div><label class="text-sm font-medium text-gray-700">Password</label><input name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="********"></div><div><label class="text-sm font-medium text-gray-700">Daftar sebagai</label><select name="role" id="role-select" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option></select></div><div id="student-fields" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Username</label><input name="username" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Username unik, tanpa spasi" required></div><div><label class="text-sm font-medium text-gray-700">Kelas</label><input name="kelas" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Contoh: XI-MIPA 1" required></div></div><p id="register-error" class="text-sm text-red-600"></p><button type="submit" class="w-full py-3 px-4 rounded-full text-white bg-brand hover:bg-brand-dark">Daftar</button></form><p class="text-sm text-center text-gray-600">Sudah punya akun? <a href="#" data-page="login" class="font-medium text-brand hover:underline">Login</a></p></div></div>`;
-        }
+        function renderConfirmationModal() { return `<div id="confirmation-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><h2 id="confirm-title" class="text-2xl font-bold text-gray-800"></h2><p id="confirm-message" class="mt-4 text-gray-600"></p><div class="mt-8 flex justify-end space-x-3"><button id="cancel-delete-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Tidak, Batal</button><button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Ya, Lanjutkan</button></div></div></div>`; }
+        function renderChangePasswordModal() { return `<div id="password-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Ganti Password</h2><button id="close-password-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button></div><form id="change-password-form" class="mt-6 space-y-4"><div><label class="block text-sm font-medium text-gray-700">Password Baru</label><input type="password" name="newPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><p id="password-error" class="text-sm text-red-600"></p><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-password-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Perubahan</button></div></form></div></div>`; }
+        function renderLogin() { return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><div class="text-center"><h1 class="text-4xl font-bold text-brand"><i class="fas fa-leaf"></i> GradeUp</h1><p class="mt-2 text-gray-600">Selamat datang! Silakan login ke akun Anda.</p></div><form id="login-form" class="space-y-6"><div><label for="identifier" class="text-sm font-medium text-gray-700">Username atau Email</label><input id="identifier" name="identifier" type="text" autocomplete="username" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="Masukkan username atau email"></div><div><label for="password" class="text-sm font-medium text-gray-700">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm ring-brand" placeholder="********"></div><p id="login-error" class="text-sm text-red-600"></p><button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark">Login</button></form><p class="text-sm text-center text-gray-600">Belum punya akun? <a href="#" data-page="register" class="font-medium text-brand hover:underline">Registrasi Mandiri di sini</a></p></div></div>`; }
+        function renderRegister() { return `<div class="flex items-center justify-center min-h-screen"><div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-400"><h2 class="text-3xl font-bold text-center text-brand">Registrasi Mandiri</h2><form id="register-form" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Nama Lengkap</label><input name="name" type="text" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Nama Lengkap Sesuai Absen"></div><div><label class="text-sm font-medium text-gray-700">Email</label><input name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="contoh@sekolah.id"></div><div><label class="text-sm font-medium text-gray-700">Password</label><input name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="********"></div><div><label class="text-sm font-medium text-gray-700">Daftar sebagai</label><select name="role" id="role-select" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option></select></div><div id="student-fields" class="space-y-4"><div><label class="text-sm font-medium text-gray-700">Username</label><input name="username" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Username unik, tanpa spasi" required></div><div><label class="text-sm font-medium text-gray-700">Kelas</label><input name="kelas" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md ring-brand" placeholder="Contoh: XI-MIPA 1" required></div></div><p id="register-error" class="text-sm text-red-600"></p><button type="submit" class="w-full py-3 px-4 rounded-full text-white bg-brand hover:bg-brand-dark">Daftar</button></form><p class="text-sm text-center text-gray-600">Sudah punya akun? <a href="#" data-page="login" class="font-medium text-brand hover:underline">Login</a></p></div></div>`; }
         
+        // =================================== STUDENT VIEWS ==================================
         function renderStudentDashboard() {
             const { assignments, submissions } = state.currentViewData;
-            if(!assignments || !submissions) return '';
+            if (!assignments) return '<h3>Memuat tugas...</h3>';
             
-            const todo = assignments.filter(a => !submissions.find(s => s.assignment_id === a.id) && new Date(a.deadline) > new Date());
-            const done = assignments.filter(a => submissions.find(s => s.assignment_id === a.id));
-            const late = assignments.filter(a => !submissions.find(s => s.assignment_id === a.id) && new Date(a.deadline) < new Date());
+            const taskCards = assignments.map(assignment => {
+                const submission = submissions.find(s => s.assignment_id === assignment.id);
+                const status = getStatus(assignment, submission);
+                const statusColors = { green: 'bg-green-100 text-green-800', red: 'bg-red-100 text-red-800', yellow: 'bg-yellow-100 text-yellow-800' };
 
-            const createCard = (a) => {
-                const sub = submissions.find(s => s.assignment_id === a.id);
-                const status = getStatus(a, sub);
-                const courseName = a.courses ? a.courses.name : 'Mata Pelajaran';
-                let badgeColor = 'bg-yellow-100 text-yellow-800';
-                if(status.color === 'green') badgeColor = 'bg-green-100 text-green-800';
-                if(status.color === 'red') badgeColor = 'bg-red-100 text-red-800';
-                return `<div class="task-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 cursor-pointer" data-assignment-id="${a.id}"><div class="flex justify-between items-start"><div><p class="text-sm font-medium text-brand">${courseName}</p><h3 class="text-lg font-bold mt-1">${a.title}</h3></div><span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}">${status.text}</span></div><p class="text-sm text-gray-500 mt-3">Deadline: ${formatDate(a.deadline)}</p>${status.color === 'green' && status.grade ? `<p class="text-lg font-bold text-gray-700 mt-2">Nilai: <span class="text-blue-600">${status.grade}</span></p>` : ''}</div>`;
-            };
+                return `
+                    <div class="task-card bg-white p-6 rounded-xl shadow-md cursor-pointer" data-page="studentAssignmentDetail" data-id="${assignment.id}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500">${assignment.courses.name}</p>
+                                <h3 class="text-xl font-bold text-gray-800 mt-1">${assignment.title}</h3>
+                            </div>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${statusColors[status.color]}">${status.text}</span>
+                        </div>
+                        <div class="mt-4 border-t pt-4 flex justify-between items-center text-sm text-gray-600">
+                            <div>
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                <span>Batas Waktu: ${formatDate(assignment.deadline)}</span>
+                            </div>
+                            ${status.grade !== null ? `<div class="font-bold text-lg text-brand">Nilai: ${status.grade}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
-            return `<main class="container mx-auto p-6"><h1 class="text-3xl font-bold mb-6">Dashboard Siswa</h1><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="bg-white/60 p-4 rounded-lg"><h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center"><i class="fas fa-list-check text-blue-500 mr-3"></i>Perlu Dikerjakan</h2><div class="space-y-4">${todo.length > 0 ? todo.map(createCard).join('') : '<p class="text-gray-500">Tidak ada tugas baru. Selamat!</p>'}</div></div><div class="bg-white/60 p-4 rounded-lg"><h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center"><i class="fas fa-check-double text-green-500 mr-3"></i>Selesai & Riwayat</h2><div class="space-y-4">${done.length > 0 ? done.map(createCard).join('') : '<p class="text-gray-500">Belum ada tugas yang selesai.</p>'}</div></div><div class="bg-white/60 p-4 rounded-lg"><h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center"><i class="fas fa-clock-rotate-left text-red-500 mr-3"></i>Terlambat</h2><div class="space-y-4">${late.length > 0 ? late.map(createCard).join('') : '<p class="text-gray-500">Tidak ada tugas yang terlambat.</p>'}</div></div></div></main>`;
+            return `
+                <main class="container mx-auto px-6 py-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Halo, ${state.currentUser.name}!</h1>
+                    <p class="text-gray-600 mt-2">Berikut adalah daftar tugas yang perlu kamu kerjakan.</p>
+                    <div class="mt-8 grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
+                        ${assignments.length > 0 ? taskCards : '<p class="text-gray-500">Tidak ada tugas yang tersedia saat ini.</p>'}
+                    </div>
+                </main>
+            `;
         }
 
         function renderStudentAssignmentDetail() {
             const { assignment, submission } = state.currentViewData;
-            if (!assignment) return `<div>Memuat detail tugas...</div>`;
-
+            if (!assignment) return '<h3>Memuat detail tugas...</h3>';
+            
             const status = getStatus(assignment, submission);
-            const deadline = new Date(assignment.deadline);
-            const now = new Date();
-            const isLate = now > deadline;
+            const isLate = new Date() > new Date(assignment.deadline);
 
-            const renderSubmissionForm = (isUpdate = false) => {
-                 return `
-                    <div class="mt-6 bg-pink-50 border-l-4 border-pink-400 p-4 rounded-r-lg">
-                        <h3 class="text-lg font-semibold text-gray-800">${isUpdate ? 'Kirim Ulang Tugas Anda' : (isLate ? 'Anda Terlambat' : 'Kumpulkan Tugas Anda')}</h3>
-                        <form id="submission-form" class="mt-4 space-y-4">
-                            <div>
-                                <label for="submission-file" class="block text-sm font-medium text-gray-700">Pilih File ${isUpdate ? 'Baru' : ''}</label>
-                                <input type="file" id="submission-file" name="submissionFile" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-brand hover:file:bg-pink-200 cursor-pointer">
-                            </div>
-                            <div>
-                                <label for="submission-notes" class="block text-sm font-medium text-gray-700">Catatan (Opsional)</label>
-                                <textarea id="submission-notes" name="submissionNotes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand" placeholder="Tambahkan catatan untuk guru Anda..."></textarea>
-                            </div>
-                            <button type="submit" class="w-full sm:w-auto inline-flex justify-center py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark">
-                                <i class="fas fa-upload mr-2"></i> ${isUpdate ? 'Kirim Ulang' : 'Kumpulkan'}
-                            </button>
-                        </form>
-                    </div>`;
-            };
-
-            let submissionContent = '';
+            let submissionSection = '';
             if (submission) {
-                submissionContent = `
-                    <div class="mt-8 bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
-                        <h3 class="text-xl font-bold text-green-800 mb-4">Tugas Telah Dikumpulkan</h3>
-                        <div class="space-y-3 text-gray-700">
-                            <p><strong class="font-medium w-32 inline-block">Tanggal Kumpul:</strong> ${formatDate(submission.submitted_at)}</p>
-                            <p><strong class="font-medium w-32 inline-block">File Anda:</strong> <a href="${submission.file_url}" target="_blank" class="text-brand hover:underline font-semibold">${submission.file_url.split('/').pop()} <i class="fas fa-external-link-alt text-xs ml-1"></i></a></p>
-                            ${submission.notes ? `<p><strong class="font-medium w-32 inline-block">Catatan:</strong> ${submission.notes}</p>` : ''}
-                            <div class="pt-2">
-                                <p class="text-2xl"><strong class="font-medium">Nilai:</strong> <span class="font-bold text-blue-600">${submission.grade ?? 'Belum dinilai'}</span></p>
-                            </div>
-                        </div>
-                        ${!isLate ? `
-                        <div class="mt-6">
-                             <p class="text-sm text-gray-600 mb-2">Anda dapat mengirimkan ulang sebelum deadline.</p>
-                             <button id="resubmit-btn" class="text-sm font-semibold text-brand hover:underline">Kirim Ulang Tugas</button>
-                        </div>
-                        ` : ''}
+                submissionSection = `
+                    <h3 class="text-xl font-semibold mb-4">Pengumpulan Anda</h3>
+                    <div class="space-y-3">
+                        <p><strong>Waktu Pengumpulan:</strong> ${formatDate(submission.submitted_at)}</p>
+                        <p><strong>File Terlampir:</strong> <a href="${submission.file_url}" target="_blank" class="text-brand hover:underline">${submission.file_url.split('/').pop()}</a></p>
+                        <p><strong>Nilai:</strong> <span class="font-bold text-lg ${submission.grade ? 'text-brand' : 'text-gray-500'}">${submission.grade ?? 'Belum dinilai'}</span></p>
                     </div>
+                    ${!isLate ? `
+                    <form id="submit-assignment-form" class="mt-6 border-t pt-6">
+                        <h3 class="text-xl font-semibold mb-2">Kirim Ulang Tugas</h3>
+                        <p class="text-sm text-gray-600 mb-4">Anda dapat mengirim ulang tugas sebelum batas waktu berakhir.</p>
+                        <div>
+                            <label for="assignmentFile" class="block text-sm font-medium text-gray-700">Pilih File Baru</label>
+                            <input type="file" name="assignmentFile" id="assignmentFile" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-brand hover:file:bg-pink-100">
+                        </div>
+                        <button type="submit" class="mt-4 w-full bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Kirim Ulang</button>
+                    </form>
+                    ` : ''}
                 `;
             } else {
-                 submissionContent = renderSubmissionForm();
+                 submissionSection = isLate ? 
+                    `<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert"><p class="font-bold">Terlambat</p><p>Anda telah melewati batas waktu pengumpulan tugas ini.</p></div>` :
+                    `<form id="submit-assignment-form">
+                        <h3 class="text-xl font-semibold mb-2">Kirim Tugas</h3>
+                        <div>
+                            <label for="assignmentFile" class="block text-sm font-medium text-gray-700">Pilih File</label>
+                            <input type="file" name="assignmentFile" id="assignmentFile" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-brand hover:file:bg-pink-100">
+                        </div>
+                        <button type="submit" class="mt-4 w-full bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Kirim Tugas</button>
+                    </form>`;
             }
 
             return `
-                <main class="container mx-auto p-6">
-                    <div class="mb-6">
-                        <button data-page="studentDashboard" class="text-brand hover:underline font-semibold"><i class="fas fa-arrow-left mr-2"></i> Kembali ke Dashboard</button>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <main class="container mx-auto px-6 py-8">
+                    <a href="#" data-page="studentDashboard" class="text-brand hover:underline mb-6 inline-block"><i class="fas fa-arrow-left mr-2"></i>Kembali ke Dashboard</a>
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div class="p-8">
-                            <p class="text-sm font-medium text-brand">${assignment.courses?.name || 'Mata Pelajaran'}</p>
-                            <h1 class="text-4xl font-bold mt-1 text-gray-800">${assignment.title}</h1>
-                            <p class="text-gray-500 mt-3">Deadline: <span class="font-semibold">${formatDate(assignment.deadline)}</span></p>
-                            <div class="mt-6 prose max-w-none text-gray-700">
-                                ${assignment.description}
-                            </div>
-                            <hr class="my-8">
-                            <div>
-                                <h2 class="text-2xl font-bold text-gray-800">Status Pengumpulan</h2>
-                                <div class="mt-4 flex items-center space-x-3">
-                                    <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-${status.color}-100 text-${status.color}-800">${status.text}</span>
-                                    ${status.grade ? `<span class="text-lg font-bold">Nilai: ${status.grade}</span>` : ''}
-                                </div>
-                                <div id="submission-section">
-                                   ${submissionContent}
-                                </div>
-                            </div>
+                            <p class="text-sm text-gray-500">${assignment.courses.name}</p>
+                            <h1 class="text-4xl font-bold text-gray-800 mt-1">${assignment.title}</h1>
+                            <p class="text-gray-600 mt-4"><i class="fas fa-calendar-alt mr-2"></i>Batas Waktu: <strong>${formatDate(assignment.deadline)}</strong></p>
+                            <div class="mt-6 prose max-w-none">${assignment.description}</div>
+                        </div>
+                        <div class="bg-gray-50 p-8 border-t">
+                            ${submissionSection}
                         </div>
                     </div>
                 </main>
             `;
         }
         
-        function renderTeacherDashboard() { 
-             const { assignments } = state.currentViewData;
-            if (!assignments) return '';
+        // =================================== TEACHER VIEWS ==================================
+        function renderTeacherDashboard() {
+            const { assignments } = state.currentViewData;
+            if (!assignments) return '<h3>Memuat data...</h3>';
 
-            const createAssignmentCard = (assignment) => {
-                return `
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div class="p-5">
-                             <p class="text-sm font-medium text-brand">${assignment.courses?.name || 'Mata Pelajaran'}</p>
-                             <h3 class="text-lg font-bold mt-1 task-card cursor-pointer" data-assignment-id="${assignment.id}">${assignment.title}</h3>
-                            <p class="text-sm text-gray-500 mt-3">Deadline: ${formatDate(assignment.deadline)}</p>
-                        </div>
-                        <div class="bg-gray-50 px-5 py-3 flex justify-end space-x-3">
-                            <button class="edit-assignment-btn text-blue-500 hover:text-blue-700 text-sm font-semibold" data-assignment-id="${assignment.id}"><i class="fas fa-pencil-alt mr-1"></i> Edit</button>
-                            <button class="delete-assignment-btn text-red-500 hover:text-red-700 text-sm font-semibold" data-assignment-id="${assignment.id}"><i class="fas fa-trash mr-1"></i> Hapus</button>
-                        </div>
-                    </div>
-                `;
-            };
+            const assignmentRows = assignments.map(a => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 font-medium text-gray-900">${a.title}</td>
+                    <td class="p-4 text-gray-600">${a.courses.name}</td>
+                    <td class="p-4 text-gray-600">${formatDate(a.deadline)}</td>
+                    <td class="p-4 text-center">
+                        <a href="#" data-page="teacherAssignmentDetail" data-id="${a.id}" class="text-brand hover:underline font-semibold">Lihat Pengumpulan</a>
+                    </td>
+                </tr>
+            `).join('');
 
             return `
-                <main class="container mx-auto p-6">
+                <main class="container mx-auto px-6 py-8">
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold">Dashboard Guru</h1>
-                        <button id="add-assignment-btn" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                            <i class="fas fa-plus mr-2"></i> Buat Tugas Baru
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-800">Dashboard Guru</h1>
+                            <p class="text-gray-600 mt-1">Kelola tugas dan lihat pengumpulan siswa.</p>
+                        </div>
+                        <button id="create-assignment-btn" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i>Buat Tugas Baru
                         </button>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${assignments.length > 0 ? assignments.map(createAssignmentCard).join('') : '<p class="text-gray-500 col-span-full">Anda belum membuat tugas apapun.</p>'}
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Judul Tugas</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Mata Pelajaran</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Batas Waktu</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${assignments.length > 0 ? assignmentRows : '<tr><td colspan="4" class="p-4 text-center text-gray-500">Belum ada tugas yang dibuat.</td></tr>'}
+                            </tbody>
+                        </table>
                     </div>
                 </main>
-                ${renderAssignmentModal()}
-            `;
-        }
-
-        function renderAssignmentModal(assignment = null) {
-            const isEditing = !!assignment;
-            const deadlineValue = assignment ? new Date(assignment.deadline).toISOString().substring(0, 16) : '';
-            return `
-                <div id="assignment-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50">
-                    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8 fade-in">
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-2xl font-bold">${isEditing ? 'Edit Tugas' : 'Buat Tugas Baru'}</h2>
-                            <button id="close-assignment-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                        </div>
-                        <form id="assignment-form" class="mt-6 space-y-4">
-                            <input type="hidden" name="assignmentId" value="${assignment?.id || ''}">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Judul Tugas</label>
-                                <input type="text" name="title" value="${assignment?.title || ''}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Mata Pelajaran</label>
-                                <select name="courseId" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
-                                   <!-- TODO: Populate courses from API -->
-                                   <option value="1" ${assignment?.course_id === 1 ? 'selected' : ''}>Bahasa Indonesia</option>
-                                   <option value="2" ${assignment?.course_id === 2 ? 'selected' : ''}>Matematika</option>
-                                   <option value="3" ${assignment?.course_id === 3 ? 'selected' : ''}>Biologi</option>
-                                </select>
-                            </div>
-                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Deskripsi</label>
-                                <textarea name="description" rows="5" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">${assignment?.description || ''}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Deadline</label>
-                                <input type="datetime-local" name="deadline" value="${deadlineValue}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand">
-                            </div>
-                            <p id="assignment-error" class="text-sm text-red-600"></p>
-                            <div class="pt-4 flex justify-end space-x-3">
-                                <button type="button" id="cancel-assignment-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button>
-                                <button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">${isEditing ? 'Simpan Perubahan' : 'Buat Tugas'}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             `;
         }
 
         function renderTeacherAssignmentDetail() {
             const { assignment, submissions } = state.currentViewData;
-            if (!assignment || !submissions) return '';
+            if (!assignment || !submissions) return `<h3>Memuat detail tugas...</h3>`;
 
-            const createSubmissionRow = (submission) => {
-                return `
-                    <tr class="hover:bg-pink-50/50">
-                        <td class="p-4">${submission.profiles?.name || 'Nama Siswa'}</td>
-                        <td class="p-4">${formatDate(submission.submitted_at)}</td>
-                        <td class="p-4"><a href="${submission.file_url}" target="_blank" class="text-brand hover:underline">Lihat File <i class="fas fa-external-link-alt text-xs"></i></a></td>
-                        <td class="p-4">
-                            <input type="number" value="${submission.grade || ''}" min="0" max="100" class="grade-input w-20 rounded-md border-gray-300 shadow-sm text-center" data-submission-id="${submission.id}">
-                        </td>
-                        <td class="p-4">
-                            <button class="save-grade-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-full" data-submission-id="${submission.id}">Simpan</button>
-                        </td>
-                    </tr>
-                `;
-            };
+            const submissionRows = submissions.map(s => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 font-medium text-gray-900">${s.profiles.name}</td>
+                    <td class="p-4 text-gray-600">${formatDate(s.submitted_at)}</td>
+                    <td class="p-4"><a href="${s.file_url}" target="_blank" class="text-brand hover:underline"><i class="fas fa-file-alt mr-2"></i>Lihat File</a></td>
+                    <td class="p-4 font-bold ${s.grade ? 'text-brand' : 'text-gray-500'}">${s.grade ?? 'Belum Dinilai'}</td>
+                    <td class="p-4 text-center">
+                        <button class="grade-btn bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded-full" data-submission-id="${s.id}" data-current-grade="${s.grade || ''}" data-student-name="${s.profiles.name}">
+                            ${s.grade ? 'Ubah Nilai' : 'Beri Nilai'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
 
             return `
-                <main class="container mx-auto p-6">
-                    <div class="mb-6">
-                        <button data-page="teacherDashboard" class="text-brand hover:underline font-semibold"><i class="fas fa-arrow-left mr-2"></i> Kembali ke Dashboard Tugas</button>
+                <main class="container mx-auto px-6 py-8">
+                     <a href="#" data-page="teacherDashboard" class="text-brand hover:underline mb-6 inline-block"><i class="fas fa-arrow-left mr-2"></i>Kembali ke Dashboard</a>
+                     <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                         <div class="flex justify-between items-start">
+                             <div>
+                                 <p class="text-sm text-gray-500">${assignment.courses.name}</p>
+                                 <h1 class="text-4xl font-bold text-gray-800 mt-1">${assignment.title}</h1>
+                                 <p class="text-gray-600 mt-4"><i class="fas fa-calendar-alt mr-2"></i>Batas Waktu: <strong>${formatDate(assignment.deadline)}</strong></p>
+                             </div>
+                             <div class="flex space-x-2">
+                                <button id="edit-assignment-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg"><i class="fas fa-edit"></i></button>
+                                <button id="delete-assignment-btn" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg"><i class="fas fa-trash"></i></button>
+                             </div>
+                         </div>
+                         <div class="mt-6 prose max-w-none">${assignment.description}</div>
+                     </div>
+                     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <h2 class="p-6 text-2xl font-bold text-gray-800 border-b">Daftar Pengumpulan (${submissions.length})</h2>
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Nama Siswa</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Waktu Pengumpulan</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">File</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Nilai</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${submissions.length > 0 ? submissionRows : '<tr><td colspan="5" class="p-4 text-center text-gray-500">Belum ada siswa yang mengumpulkan.</td></tr>'}
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="bg-white rounded-lg shadow-lg p-8">
-                        <p class="text-sm font-medium text-brand">${assignment.courses?.name || 'Mata Pelajaran'}</p>
-                        <h1 class="text-4xl font-bold mt-1 text-gray-800">${assignment.title}</h1>
-                        <p class="text-gray-500 mt-3">Deadline: <span class="font-semibold">${formatDate(assignment.deadline)}</span></p>
-                        
-                        <hr class="my-8">
+                </main>
+            `;
+        }
 
-                        <h2 class="text-2xl font-bold text-gray-800">Daftar Pengumpulan</h2>
-                        <div class="mt-4 overflow-x-auto">
-                            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
-                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Kumpul</th>
-                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
-                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nilai</th>
-                                        <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    ${submissions.length > 0 ? submissions.map(createSubmissionRow).join('') : '<tr><td colspan="5" class="p-4 text-center text-gray-500">Belum ada siswa yang mengumpulkan.</td></tr>'}
-                                </tbody>
-                            </table>
+        // =================================== ADMIN VIEWS ===================================
+        function renderAdminDashboard() {
+            const currentTab = state.adminCurrentTab;
+            return `
+                <main class="container mx-auto px-6 py-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Panel Administrator</h1>
+                    <div class="border-b border-gray-200 mt-6">
+                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button data-tab="users" class="admin-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${currentTab === 'users' ? 'tab-active' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}">Manajemen Pengguna</button>
+                            <button data-tab="monitoring" class="admin-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${currentTab === 'monitoring' ? 'tab-active' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}">Monitoring & Statistik</button>
+                        </nav>
+                    </div>
+                    <div id="admin-tab-content" class="mt-8">
+                        ${currentTab === 'users' ? renderAdminUserManagement() : renderAdminMonitoring()}
+                    </div>
+                </main>
+            `;
+        }
+
+        function renderAdminUserManagement() {
+            const { users } = state.currentViewData;
+            if (!users) return `<h3>Memuat pengguna...</h3>`;
+            const userRows = users.map(user => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 font-medium text-gray-900">${user.name}</td>
+                    <td class="p-4 text-gray-600">${user.email}</td>
+                    <td class="p-4 text-gray-600 capitalize">${user.role}</td>
+                    <td class="p-4 text-gray-600">${user.kelas || 'N/A'}</td>
+                    <td class="p-4 text-center space-x-2">
+                        <button class="edit-user-btn bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-3 rounded-full" data-id="${user.id}">Edit</button>
+                        <button class="delete-user-btn bg-red-200 hover:bg-red-300 text-red-800 text-sm py-1 px-3 rounded-full" data-id="${user.id}">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="p-4 text-sm font-semibold text-gray-600">Nama</th>
+                                <th class="p-4 text-sm font-semibold text-gray-600">Email</th>
+                                <th class="p-4 text-sm font-semibold text-gray-600">Peran</th>
+                                <th class="p-4 text-sm font-semibold text-gray-600">Kelas</th>
+                                <th class="p-4 text-sm font-semibold text-gray-600 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>${userRows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderAdminMonitoring() {
+            return `<div class="bg-white rounded-xl shadow-lg p-8 text-gray-500">Fitur monitoring dan statistik akan segera tersedia.</div>`;
+        }
+
+        // =================================== PROFILE VIEW ==================================
+        function renderProfilePage() {
+            const currentTab = state.profileCurrentTab;
+             return `
+                <main class="container mx-auto px-6 py-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Profil Saya</h1>
+                    <div class="mt-8 max-w-4xl mx-auto flex flex-col md:flex-row gap-8">
+                        <div class="md:w-1/3">
+                             <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+                                <img src="${state.currentUser.profile_picture}" alt="Foto Profil" class="w-32 h-32 rounded-full mx-auto object-cover ring-4 ring-pink-200">
+                                <h2 class="mt-4 text-2xl font-bold">${state.currentUser.name}</h2>
+                                <p class="text-gray-500 capitalize">${state.currentUser.role}</p>
+                             </div>
+                             <div class="mt-4 bg-white p-2 rounded-xl shadow-lg">
+                                <nav class="flex flex-col space-y-1">
+                                    <button data-tab="info" class="profile-tab text-left w-full px-4 py-2 rounded-lg font-medium text-sm ${currentTab === 'info' ? 'bg-pink-100 text-brand' : 'text-gray-600 hover:bg-gray-100'}">Informasi Akun</button>
+                                    <button data-tab="security" class="profile-tab text-left w-full px-4 py-2 rounded-lg font-medium text-sm ${currentTab === 'security' ? 'bg-pink-100 text-brand' : 'text-gray-600 hover:bg-gray-100'}">Keamanan</button>
+                                </nav>
+                            </div>
+                        </div>
+                        <div class="md:w-2/3 bg-white p-8 rounded-xl shadow-lg">
+                            ${currentTab === 'info' ? renderProfileInfoForm() : renderProfileSecurity()}
                         </div>
                     </div>
                 </main>
             `;
         }
 
-        function renderAdminDashboard() { return `<div>Halaman Admin sedang dalam pengembangan.</div>`; }
-        function renderProfilePage() { return `<div>Halaman Profil sedang dalam pengembangan.</div>`; }
+        function renderProfileInfoForm() {
+            const user = state.currentUser;
+            return `
+                <h2 class="text-2xl font-bold mb-6">Informasi Akun</h2>
+                <form id="update-profile-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                        <input type="text" name="name" value="${user.name}" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" name="username" value="${user.username}" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" name="email" value="${user.email}" disabled class="mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100 text-gray-500">
+                    </div>
+                     ${user.role === 'student' ? `
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Kelas</label>
+                        <input type="text" name="kelas" value="${user.kelas}" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand">
+                    </div>` : ''}
+                    <div class="pt-4">
+                         <button type="submit" class="w-full bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Perubahan</button>
+                    </div>
+                </form>
+            `;
+        }
         
-        function attachEventListeners() {
-            if(!appContainer) return;
+        function renderProfileSecurity() {
+            return `
+                <h2 class="text-2xl font-bold mb-6">Keamanan</h2>
+                <p class="text-gray-600 mb-4">Ganti password Anda secara berkala untuk menjaga keamanan akun.</p>
+                <button id="change-password-btn" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Ganti Password</button>
+            `;
+        }
 
-            // Delegated click listener
+        // =================================== MODAL RENDERERS ================================
+        function renderCreateAssignmentModal() {
+            const { courses } = state.currentViewData;
+            if (!courses) return '';
+            const courseOptions = courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            
+            return `<div id="assignment-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8 fade-in"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Buat Tugas Baru</h2><button id="close-assignment-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button></div><form id="create-assignment-form" class="mt-6 space-y-4"> <input type="hidden" name="id"> <div><label class="block text-sm font-medium">Judul</label><input type="text" name="title" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium">Mata Pelajaran</label><select name="course_id" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand">${courseOptions}</select></div><div><label class="block text-sm font-medium">Batas Waktu</label><input type="datetime-local" name="deadline" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium">Deskripsi</label><textarea name="description" rows="5" class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand"></textarea></div><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-assignment-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Tugas</button></div></form></div></div>`;
+        }
+        
+        function renderGradingModal() {
+            return `<div id="grading-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><div class="flex justify-between items-center"><h2 id="grading-title" class="text-2xl font-bold">Beri Nilai</h2><button id="close-grading-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button></div><form id="grading-form" class="mt-6 space-y-4"><input type="hidden" name="submission_id"><div><label class="block text-sm font-medium">Nilai (0-100)</label><input type="number" name="grade" min="0" max="100" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-grading-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan Nilai</button></div></form></div></div>`;
+        }
+
+        function renderEditUserModal() {
+            return `<div id="edit-user-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center z-50"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 fade-in"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Edit Pengguna</h2><button id="close-edit-user-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button></div><form id="edit-user-form" class="mt-6 space-y-4"><input type="hidden" name="id"><div><label class="block text-sm font-medium">Nama Lengkap</label><input type="text" name="name" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand"></div><div><label class="block text-sm font-medium">Peran</label><select name="role" class="mt-1 w-full rounded-md border-gray-300 shadow-sm ring-brand"><option value="student">Siswa</option><option value="teacher">Guru</option><option value="admin">Admin</option></select></div><div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-edit-user-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button type="submit" class="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div></form></div></div>`;
+        }
+
+        // ===================================================================================
+        // EVENT LISTENERS
+        // ===================================================================================
+        function attachEventListeners() {
             appContainer.addEventListener('click', async (e) => {
                 const target = e.target;
-                
-                // Page navigation
                 const pageLink = target.closest('[data-page]');
                 if (pageLink) {
                     e.preventDefault();
+                    state.currentAssignmentId = pageLink.dataset.id || null;
                     navigate(pageLink.dataset.page);
                 }
 
-                // Logout
-                if (target.closest('#logout-btn')) {
+                if (target.id === 'logout-btn') {
                     e.preventDefault();
                     await api.logout();
+                    state.currentUser = null;
+                    navigate('login');
+                    showToast("Anda telah berhasil logout.");
                 }
 
-                // Profile menu toggle
-                if (target.closest('#profile-menu-btn')) {
+                if(target.id === 'profile-menu-btn' || target.closest('#profile-menu-btn')) {
                     document.getElementById('profile-menu')?.classList.toggle('hidden');
                 }
-
-                // Student: View assignment detail
-                const studentTaskCard = target.closest('.task-card[data-assignment-id]');
-                if (studentTaskCard && state.currentPage === 'studentDashboard') {
-                    e.preventDefault();
-                    state.currentAssignmentId = parseInt(studentTaskCard.dataset.assignmentId);
-                    navigate('studentAssignmentDetail');
-                }
-
-                // Student: Resubmit button
-                if (target.id === 'resubmit-btn') {
-                    const submissionSection = document.getElementById('submission-section');
-                    const renderSubmissionForm = (isUpdate = false) => {
-                         return `<div class="mt-6 bg-pink-50 border-l-4 border-pink-400 p-4 rounded-r-lg"><h3 class="text-lg font-semibold text-gray-800">Kirim Ulang Tugas Anda</h3><form id="submission-form" class="mt-4 space-y-4"><div><label for="submission-file" class="block text-sm font-medium text-gray-700">Pilih File Baru</label><input type="file" id="submission-file" name="submissionFile" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-brand hover:file:bg-pink-200 cursor-pointer"></div><div><label for="submission-notes" class="block text-sm font-medium text-gray-700">Catatan (Opsional)</label><textarea id="submission-notes" name="submissionNotes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm ring-brand" placeholder="Tambahkan catatan untuk guru Anda..."></textarea></div><button type="submit" class="w-full sm:w-auto inline-flex justify-center py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand hover:bg-brand-dark"><i class="fas fa-upload mr-2"></i> Kirim Ulang</button></form></div>`;
+                
+                // Modals
+                const openPasswordModal = target.id === 'change-password-btn';
+                if(openPasswordModal) document.getElementById('password-modal')?.classList.add('flex');
+                
+                const closePasswordModal = target.id === 'close-password-modal-btn' || target.id === 'cancel-password-btn';
+                if(closePasswordModal) document.getElementById('password-modal')?.classList.remove('flex');
+                
+                const openAssignmentModal = target.id === 'create-assignment-btn' || target.id === 'edit-assignment-btn';
+                if(openAssignmentModal) {
+                    const form = document.getElementById('create-assignment-form');
+                    form.reset();
+                    form.id.value = '';
+                    if(target.id === 'edit-assignment-btn') {
+                        const { assignment } = state.currentViewData;
+                        form.querySelector('h2').textContent = 'Edit Tugas';
+                        form.id.value = assignment.id;
+                        form.title.value = assignment.title;
+                        form.course_id.value = assignment.course_id;
+                        form.deadline.value = new Date(assignment.deadline).toISOString().slice(0, 16);
+                        form.description.value = assignment.description;
+                    } else {
+                        form.querySelector('h2').textContent = 'Buat Tugas Baru';
                     }
-                    submissionSection.innerHTML = renderSubmissionForm(true);
-                }
-
-                // Teacher: View assignment detail
-                 const teacherTaskCard = target.closest('.task-card[data-assignment-id]');
-                 if (teacherTaskCard && state.currentPage === 'teacherDashboard' && !target.closest('button')) {
-                    state.currentAssignmentId = parseInt(teacherTaskCard.dataset.assignmentId);
-                    navigate('teacherAssignmentDetail');
-                 }
-
-                // Teacher: Add/Edit/Delete assignment buttons
-                if (target.id === 'add-assignment-btn') {
                     document.getElementById('assignment-modal')?.classList.add('flex');
                 }
-                if (target.id === 'close-assignment-modal-btn' || target.id === 'cancel-assignment-btn') {
-                    document.getElementById('assignment-modal')?.classList.remove('flex');
-                }
-                const editBtn = target.closest('.edit-assignment-btn');
-                if (editBtn) {
-                    showToast("Fungsi edit sedang dikembangkan.", "info");
-                }
-                const deleteBtn = target.closest('.delete-assignment-btn');
-                if (deleteBtn) {
-                    state.itemToDelete = { type: 'assignment', id: deleteBtn.dataset.assignmentId };
-                    const modal = document.getElementById('confirmation-modal');
-                    modal.querySelector('#confirm-title').textContent = 'Hapus Tugas';
-                    modal.querySelector('#confirm-message').textContent = 'Apakah Anda yakin ingin menghapus tugas ini? Semua data pengumpulan terkait akan ikut terhapus.';
+
+                const closeAssignmentModal = target.id === 'close-assignment-modal-btn' || target.id === 'cancel-assignment-btn';
+                if(closeAssignmentModal) document.getElementById('assignment-modal')?.classList.remove('flex');
+                
+                const openGradingModal = target.closest('.grade-btn');
+                if(openGradingModal) {
+                    const modal = document.getElementById('grading-modal');
+                    modal.querySelector('#grading-title').textContent = `Beri Nilai untuk ${openGradingModal.dataset.studentName}`;
+                    modal.querySelector('input[name="submission_id"]').value = openGradingModal.dataset.submissionId;
+                    modal.querySelector('input[name="grade"]').value = openGradingModal.dataset.currentGrade;
                     modal.classList.add('flex');
                 }
                 
-                // Teacher: Save Grade
-                const saveGradeBtn = target.closest('.save-grade-btn');
-                if (saveGradeBtn) {
-                    e.preventDefault();
-                    const submissionId = saveGradeBtn.dataset.submissionId;
-                    const gradeInput = document.querySelector(`.grade-input[data-submission-id="${submissionId}"]`);
-                    const newGrade = gradeInput.value;
-                    try {
-                        setLoading(saveGradeBtn, true);
-                        await api.updateSubmission(submissionId, { grade: newGrade });
-                        showToast("Nilai berhasil disimpan.");
-                    } catch(error) {
-                        showToast(error.message, "error");
-                    } finally {
-                        setLoading(saveGradeBtn, false);
+                const closeGradingModal = target.id === 'close-grading-modal-btn' || target.id === 'cancel-grading-btn';
+                if(closeGradingModal) document.getElementById('grading-modal')?.classList.remove('flex');
+
+                const openEditUserModal = target.closest('.edit-user-btn');
+                if(openEditUserModal) {
+                    const user = state.currentViewData.users.find(u => u.id === openEditUserModal.dataset.id);
+                    if(user) {
+                        const modal = document.getElementById('edit-user-modal');
+                        modal.querySelector('input[name="id"]').value = user.id;
+                        modal.querySelector('input[name="name"]').value = user.name;
+                        modal.querySelector('select[name="role"]').value = user.role;
+                        modal.classList.add('flex');
                     }
                 }
+                 const closeEditUserModal = target.id === 'close-edit-user-modal-btn' || target.id === 'cancel-edit-user-btn';
+                if(closeEditUserModal) document.getElementById('edit-user-modal')?.classList.remove('flex');
 
-                // Confirmation Modal cancel
-                if (target.id === 'cancel-delete-btn') {
-                    document.getElementById('confirmation-modal').classList.remove('flex');
+                // Confirmation Modal
+                const openDeleteAssignment = target.id === 'delete-assignment-btn';
+                if(openDeleteAssignment) {
+                    state.itemToDelete = { type: 'assignment', id: state.currentAssignmentId };
+                    const modal = document.getElementById('confirmation-modal');
+                    modal.querySelector('#confirm-title').textContent = 'Hapus Tugas?';
+                    modal.querySelector('#confirm-message').textContent = 'Apakah Anda yakin ingin menghapus tugas ini? Semua data pengumpulan yang terkait akan ikut terhapus.';
+                    modal.classList.add('flex');
+                }
+                
+                const openDeleteUser = target.closest('.delete-user-btn');
+                if(openDeleteUser) {
+                    state.itemToDelete = { type: 'user', id: openDeleteUser.dataset.id };
+                    const modal = document.getElementById('confirmation-modal');
+                    modal.querySelector('#confirm-title').textContent = 'Hapus Pengguna?';
+                    modal.querySelector('#confirm-message').textContent = 'Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.';
+                    modal.classList.add('flex');
+                }
+
+                const closeConfirmationModal = target.id === 'cancel-delete-btn';
+                if(closeConfirmationModal) {
+                    state.itemToDelete = { type: null, id: null };
+                    document.getElementById('confirmation-modal')?.classList.remove('flex');
+                }
+                
+                const confirmDeleteBtn = target.id === 'confirm-delete-btn';
+                if(confirmDeleteBtn) {
+                     setLoading(target, true);
+                    try {
+                        if(state.itemToDelete.type === 'assignment') {
+                            await api.deleteAssignment(state.itemToDelete.id);
+                            showToast("Tugas berhasil dihapus.");
+                            navigate('teacherDashboard');
+                        } else if(state.itemToDelete.type === 'user') {
+                            await api.deleteUser(state.itemToDelete.id);
+                            showToast("Pengguna berhasil dihapus.");
+                            navigate('adminDashboard');
+                        }
+                    } catch(error) { showToast(error.message, 'error'); } 
+                    finally { setLoading(target, false); document.getElementById('confirmation-modal')?.classList.remove('flex'); }
+                }
+
+                // Tabs
+                const adminTab = target.closest('.admin-tab');
+                if(adminTab) {
+                    state.adminCurrentTab = adminTab.dataset.tab;
+                    navigate('adminDashboard');
+                }
+                const profileTab = target.closest('.profile-tab');
+                if(profileTab) {
+                    state.profileCurrentTab = profileTab.dataset.tab;
+                    render(); // Only re-render, no need to fetch data again
                 }
             });
 
-            // Delegated form submission listener
             appContainer.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = e.target;
-                const submitButton = form.querySelector('button[type="submit"]');
-                setLoading(submitButton, true);
-                const errorEl = form.querySelector('[id$="-error"]');
-                if(errorEl) errorEl.textContent = '';
-
+                const button = form.querySelector('button[type="submit"]');
+                setLoading(button, true);
+                
                 try {
                     switch (form.id) {
-                        case 'login-form':
-                            await api.login(form.identifier.value, form.password.value);
+                        case 'login-form': {
+                            const formData = new FormData(form);
+                            const { identifier, password } = Object.fromEntries(formData.entries());
+                            await api.login(identifier, password);
+                            // Auth listener will handle navigation
                             break;
-                        case 'register-form':
-                            const role = form.role.value;
-                            const userData = { name: form.name.value, email: form.email.value, password: form.password.value, role };
-                            if (role === 'student') {
-                                userData.username = form.username.value;
-                                userData.kelas = form.kelas.value;
-                            }
-                            await api.register(userData);
+                        }
+                        case 'register-form': {
+                             const formData = new FormData(form);
+                             const userData = Object.fromEntries(formData.entries());
+                             if(userData.role === 'teacher') {
+                                delete userData.username;
+                                delete userData.kelas;
+                             }
+                             await api.register(userData);
+                             showToast("Registrasi berhasil! Silakan login.", "success");
+                             navigate('login');
+                             break;
+                        }
+                        case 'change-password-form': {
+                            const newPassword = new FormData(form).get('newPassword');
+                            await api.updatePassword(newPassword);
+                            showToast("Password berhasil diubah.");
+                            document.getElementById('password-modal')?.classList.remove('flex');
                             break;
-                        case 'submission-form':
-                            const file = form.submissionFile.files[0];
-                            if (!file) {
-                                showToast("Anda harus memilih file.", "error");
-                                setLoading(submitButton, false);
-                                return;
-                            }
-                            const filePath = `submissions/${state.currentUser.id}/${state.currentAssignmentId}/${Date.now()}_${file.name}`;
-                            const fileUrl = await api.uploadFile(file, filePath);
+                        }
+                        case 'update-profile-form': {
+                             const formData = new FormData(form);
+                             const profileData = Object.fromEntries(formData.entries());
+                             const updatedUser = await api.updateUser(state.currentUser.id, profileData);
+                             state.currentUser = {...state.currentUser, ...updatedUser};
+                             showToast("Profil berhasil diperbarui.");
+                             render();
+                             break;
+                        }
+                        case 'create-assignment-form': {
+                             const formData = new FormData(form);
+                             const assignmentData = Object.fromEntries(formData.entries());
+                             assignmentData.teacher_id = state.currentUser.id;
+                             if(assignmentData.id) { // Editing
+                                const id = assignmentData.id;
+                                delete assignmentData.id;
+                                await api.updateAssignment(id, assignmentData);
+                                showToast("Tugas berhasil diperbarui.");
+                             } else { // Creating
+                                await api.createAssignment(assignmentData);
+                                showToast("Tugas berhasil dibuat.");
+                             }
+                             document.getElementById('assignment-modal')?.classList.remove('flex');
+                             navigate(state.currentUser.role === 'teacher' ? 'teacherDashboard' : 'teacherAssignmentDetail');
+                             break;
+                        }
+                        case 'submit-assignment-form': {
+                            const fileInput = form.querySelector('input[type="file"]');
+                            const file = fileInput.files[0];
+                            if (!file) { showToast("Pilih file terlebih dahulu.", "error"); return; }
+                            const filePath = `${state.currentUser.id}/${state.currentAssignmentId}/${file.name}`;
+                            const publicUrl = await api.uploadFile(file, filePath);
+                            
                             const submissionData = {
                                 assignment_id: state.currentAssignmentId,
                                 student_id: state.currentUser.id,
-                                file_url: fileUrl,
-                                notes: form.submissionNotes.value,
-                                submitted_at: new Date().toISOString(),
+                                file_url: publicUrl
                             };
-                            if (state.currentViewData.submission) {
+                            
+                            if (state.currentViewData.submission) { // Resubmitting
                                 await api.updateSubmission(state.currentViewData.submission.id, submissionData);
-                                showToast("Tugas berhasil dikirim ulang!");
-                            } else {
+                                showToast("Tugas berhasil dikirim ulang.");
+                            } else { // First time
                                 await api.createSubmission(submissionData);
-                                showToast("Tugas berhasil dikumpulkan!");
+                                showToast("Tugas berhasil dikirim.");
                             }
                             navigate('studentAssignmentDetail');
                             break;
-                        case 'assignment-form':
-                            const assignmentId = form.assignmentId.value;
-                            const assignmentData = {
-                                title: form.title.value,
-                                description: form.description.value,
-                                deadline: new Date(form.deadline.value).toISOString(),
-                                course_id: parseInt(form.courseId.value),
-                                teacher_id: state.currentUser.id,
-                            };
-                            if (assignmentId) {
-                                await api.updateAssignment(assignmentId, assignmentData);
-                                showToast("Tugas berhasil diperbarui.");
-                            } else {
-                                await api.createAssignment(assignmentData);
-                                showToast("Tugas baru berhasil dibuat.");
-                            }
-                            document.getElementById('assignment-modal')?.classList.remove('flex');
-                            navigate('teacherDashboard');
-                            break;
+                        }
+                        case 'grading-form': {
+                             const formData = new FormData(form);
+                             const { submission_id, grade } = Object.fromEntries(formData.entries());
+                             await api.updateSubmission(submission_id, { grade });
+                             showToast("Nilai berhasil disimpan.");
+                             document.getElementById('grading-modal')?.classList.remove('flex');
+                             navigate('teacherAssignmentDetail');
+                             break;
+                        }
+                        case 'edit-user-form': {
+                             const formData = new FormData(form);
+                             const { id, ...userData } = Object.fromEntries(formData.entries());
+                             await api.updateUser(id, userData);
+                             showToast("Data pengguna berhasil diperbarui.");
+                             document.getElementById('edit-user-modal')?.classList.remove('flex');
+                             navigate('adminDashboard');
+                             break;
+                        }
                     }
                 } catch (error) {
-                    if(errorEl) errorEl.textContent = error.message;
-                    showToast(error.message, 'error');
+                    console.error("Form submission error:", error);
+                    const errorElement = form.querySelector('[id$="-error"]');
+                    if (errorElement) errorElement.textContent = error.message;
+                    else showToast(error.message, 'error');
                 } finally {
-                    setLoading(submitButton, false);
+                    setLoading(button, false);
                 }
             });
 
-            // Listener for role change on register form
             const roleSelect = document.getElementById('role-select');
-            if (roleSelect) {
+            if(roleSelect) {
                 roleSelect.addEventListener('change', () => {
-                    document.getElementById('student-fields').style.display = roleSelect.value === 'student' ? 'block' : 'none';
-                });
-            }
-
-            // Listener for confirm delete button (separate to avoid re-adding)
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) {
-                confirmDeleteBtn.onclick = async () => {
-                    const { type, id } = state.itemToDelete;
-                     setLoading(confirmDeleteBtn, true);
-                    try {
-                        if (type === 'assignment') {
-                            await api.deleteAssignment(id);
-                            showToast("Tugas berhasil dihapus.");
-                            navigate('teacherDashboard');
-                        }
-                    } catch (error) {
-                        showToast(error.message, 'error');
-                    } finally {
-                         setLoading(confirmDeleteBtn, false);
-                        document.getElementById('confirmation-modal')?.classList.remove('flex');
-                        state.itemToDelete = { type: null, id: null };
+                    const studentFields = document.getElementById('student-fields');
+                    const requiredInputs = studentFields.querySelectorAll('input');
+                    if(roleSelect.value === 'student') {
+                        studentFields.style.display = 'block';
+                        requiredInputs.forEach(i => i.required = true);
+                    } else {
+                        studentFields.style.display = 'none';
+                        requiredInputs.forEach(i => i.required = false);
                     }
-                };
+                });
             }
         }
         
-        function initializeApp() {
+        // ===================================================================================
+        // APP INITIALIZATION
+        // ===================================================================================
+        async function initializeApp() {
             db.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
-                    if (!state.currentUser || state.currentUser.id !== session.user.id) {
-                        try {
-                            const userProfile = await api.getProfile(session.user.id);
-                            state.currentUser = userProfile;
-                            const dashboardPage = userProfile.role === 'student' ? 'studentDashboard' : (userProfile.role === 'teacher' ? 'teacherDashboard' : 'adminDashboard');
-                            navigate(dashboardPage);
-                        } catch (error) {
-                            showToast("Gagal mengambil data profil.", "error");
-                            await api.logout();
-                        }
-                    }
-                } else if (event === 'SIGNED_OUT') {
+                const user = session?.user;
+                if (user) {
+                    const profile = await api.getProfile(user.id);
+                    state.currentUser = profile;
+                    const role = profile.role;
+                    if (role === 'student') navigate('studentDashboard');
+                    else if (role === 'teacher') navigate('teacherDashboard');
+                    else if (role === 'admin') navigate('adminDashboard');
+                } else {
                     state.currentUser = null;
                     navigate('login');
                 }
             });
         }
-
     </script>
 </body>
 </html>
